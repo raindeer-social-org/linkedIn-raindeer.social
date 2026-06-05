@@ -1,0 +1,111 @@
+{
+  "postAnalytics": {
+    "platform": "Instagram",
+    "postTitle": "Brand Intro Reel",
+    "postDate": "2024-12-02",
+    "metrics": {
+      "views": 124800,
+      "likes": 5840,
+      "comments": 312,
+      "shares": 1847,
+      "saves": 2940,
+      "reach": 98400,
+      "engagementRate": 4.68,
+      "impressions": 142600
+    },
+    "engagementOverTime": [
+      { "day": "Day 1", "engagement": 2840, "reach": 34200 },
+      { "day": "Day 2", "engagement": 4120, "reach": 58400 },
+      { "day": "Day 3", "engagement": 3680, "reach": 72100 },
+      { "day": "Day 4", "engagement": 2940, "reach": 81400 },
+      { "day": "Day 5", "engagement": 1820, "reach": 88900 },
+      { "day": "Day 6", "engagement": 940, "reach": 94200 },
+      { "day": "Day 7", "engagement": 480, "reach": 98400 }
+    ],
+    "audienceBreakdown": {
+      "ageGroups": [
+        { "group": "18–24", "percentage": 28 },
+        { "group": "25–34", "percentage": 42 },
+        { "group": "35–44", "percentage": 20 },
+        { "group": "45–54", "percentage": 7 },
+        { "group": "55+", "percentage": 3 }
+      ],
+      "gender": { "female": 54, "male": 42, "other": 4 },
+      "topLocations": ["Mumbai", "Delhi", "Bangalore", "New York", "London"]
+    },
+    "hourlyHeatmap": [
+      [0.1, 0.05, 0.03, 0.02, 0.02, 0.04, 0.12, 0.28, 0.42, 0.38, 0.32, 0.35, 0.48, 0.42, 0.38, 0.35, 0.40, 0.58, 0.72, 0.68, 0.55, 0.42, 0.28, 0.15],
+      [0.12, 0.06, 0.03, 0.02, 0.02, 0.05, 0.15, 0.32, 0.55, 0.62, 0.58, 0.65, 0.72, 0.68, 0.62, 0.58, 0.65, 0.78, 0.85, 0.82, 0.68, 0.52, 0.35, 0.18],
+      [0.15, 0.07, 0.04, 0.02, 0.03, 0.06, 0.18, 0.38, 0.62, 0.72, 0.68, 0.75, 0.82, 0.78, 0.72, 0.68, 0.75, 0.88, 0.95, 0.92, 0.78, 0.62, 0.42, 0.22],
+      [0.14, 0.07, 0.04, 0.02, 0.02, 0.05, 0.16, 0.35, 0.58, 0.68, 0.64, 0.72, 0.78, 0.74, 0.68, 0.64, 0.72, 0.84, 0.92, 0.88, 0.74, 0.58, 0.38, 0.20],
+      [0.12, 0.06, 0.03, 0.02, 0.02, 0.04, 0.14, 0.30, 0.50, 0.58, 0.55, 0.62, 0.68, 0.64, 0.58, 0.55, 0.62, 0.74, 0.82, 0.78, 0.65, 0.50, 0.32, 0.18],
+      [0.20, 0.10, 0.06, 0.04, 0.04, 0.08, 0.20, 0.42, 0.65, 0.72, 0.68, 0.75, 0.82, 0.78, 0.72, 0.68, 0.75, 0.88, 0.95, 0.92, 0.78, 0.62, 0.45, 0.28],
+      [0.22, 0.12, 0.07, 0.05, 0.05, 0.08, 0.18, 0.35, 0.52, 0.58, 0.55, 0.62, 0.72, 0.68, 0.62, 0.58, 0.65, 0.80, 0.88, 0.84, 0.72, 0.55, 0.40, 0.25]
+    ]
+  },
+  "crossPlatform": {
+    "postTitle": "Brand Intro Reel",
+    "platforms": [
+      { "name": "Instagram", "views": 124800, "likes": 5840, "comments": 312, "shares": 1847, "engagementRate": 4.68, "sparkline": [42, 58, 72, 65, 48, 35, 22] },
+      { "name": "TikTok", "views": 284600, "likes": 18420, "comments": 924, "shares": 6284, "engagementRate": 9.12, "sparkline": [28, 85, 142, 98, 72, 48, 32] },
+      { "name": "LinkedIn", "views": 22400, "likes": 1280, "comments": 184, "shares": 428, "engagementRate": 6.24, "sparkline": [18, 28, 35, 32, 28, 22, 15] },
+      { "name": "YouTube", "views": 18200, "likes": 842, "comments": 128, "shares": 284, "engagementRate": 3.48, "sparkline": [8, 18, 28, 35, 42, 38, 28] },
+      { "name": "X", "views": 48400, "likes": 2840, "comments": 428, "shares": 1842, "engagementRate": 5.28, "sparkline": [25, 48, 72, 58, 42, 32, 20] }
+    ],
+    "insights": [
+      { "text": "TikTok outperformed Instagram by 3.2x on engagement rate", "type": "positive" },
+      { "text": "LinkedIn had the highest comment-to-view ratio (0.82%)", "type": "insight" },
+      { "text": "YouTube showing steady growth — consider more long-form repurposing", "type": "tip" }
+    ]
+  },
+  "brandAnalytics": {
+    "brandHealthScore": 84,
+    "followerGrowth": [
+      { "month": "Jul", "Instagram": 8400, "LinkedIn": 2100, "TikTok": 4200, "YouTube": 1800 },
+      { "month": "Aug", "Instagram": 10200, "LinkedIn": 2600, "TikTok": 6800, "YouTube": 2400 },
+      { "month": "Sep", "Instagram": 12800, "LinkedIn": 3200, "TikTok": 11400, "YouTube": 3100 },
+      { "month": "Oct", "Instagram": 16400, "LinkedIn": 4100, "TikTok": 18200, "YouTube": 4200 },
+      { "month": "Nov", "Instagram": 21200, "LinkedIn": 5400, "TikTok": 28600, "YouTube": 5800 },
+      { "month": "Dec", "Instagram": 28400, "LinkedIn": 7200, "TikTok": 42800, "YouTube": 8200 }
+    ],
+    "contentPerformanceByType": [
+      { "type": "Reels", "value": 92 },
+      { "type": "Carousels", "value": 78 },
+      { "type": "Stories", "value": 55 },
+      { "type": "Posts", "value": 48 },
+      { "type": "Articles", "value": 72 },
+      { "type": "Live", "value": 38 }
+    ],
+    "monthlyReachTrend": [
+      { "month": "Jul", "reach": 42000 },
+      { "month": "Aug", "reach": 68000 },
+      { "month": "Sep", "reach": 94000 },
+      { "month": "Oct", "reach": 128000 },
+      { "month": "Nov", "reach": 184000 },
+      { "month": "Dec", "reach": 248000 }
+    ],
+    "aiInsights": [
+      {
+        "id": "insight-1",
+        "title": "Double down on Reels",
+        "body": "Your Reels content is generating 3.8x more reach than static posts. Shift 40% of static post budget to short-form video in Q1.",
+        "impact": "High",
+        "icon": "TrendingUp"
+      },
+      {
+        "id": "insight-2",
+        "title": "Post at 9am and 7pm IST",
+        "body": "Your audience is most active between 8–10am and 6–8pm IST on weekdays. Aligning your schedule could improve reach by 22%.",
+        "impact": "Medium",
+        "icon": "Clock"
+      },
+      {
+        "id": "insight-3",
+        "title": "TikTok is your growth engine",
+        "body": "TikTok follower growth is outpacing all other platforms combined. Consider creating TikTok-first content and repurposing to Instagram.",
+        "impact": "High",
+        "icon": "Zap"
+      }
+    ]
+  }
+}

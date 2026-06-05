@@ -1,0 +1,63 @@
+[
+  {
+    "id": "agent-trend",
+    "name": "Trend Analysis Agent",
+    "role": "Social Trend Intelligence",
+    "icon": "TrendingUp",
+    "color": "#35A7FF",
+    "delay": 800,
+    "duration": 3200,
+    "dummyOutput": "Analyzing trending content formats for Q4 2024...\n\n→ Short-form video (15–30s) engagement up 42% YoY on Instagram\n→ Carousel posts with data storytelling outperform single images by 3.1x\n→ LinkedIn thought leadership posts trending: 800–1200 words with data\n→ TikTok: POV-style and 'day-in-the-life' formats dominating niche feeds\n→ Cross-platform audio branding becoming critical differentiator\n\nKey opportunity: Educational carousel + short Reel combo posts driving highest saves-to-reach ratio in your industry segment."
+  },
+  {
+    "id": "agent-seo",
+    "name": "Platform SEO Agent",
+    "role": "Platform Optimization Specialist",
+    "icon": "Search",
+    "color": "#74D0FF",
+    "delay": 1400,
+    "duration": 2800,
+    "dummyOutput": "Running platform-specific SEO analysis...\n\n→ Instagram: Alt text optimization + first comment hashtag strategy\n→ Niche hashtags (#BrandDesign, #AIStartup) performing 8.4x better than broad tags\n→ Optimal caption length: 138–150 chars for peak engagement\n→ LinkedIn: Keywords in first 2 lines drive 2.7x more impressions\n→ Post timing: Tue–Thu, 8–10am and 5–7pm (your audience timezone: IST)\n\nRecommended hashtag mix: 3 niche (10K–50K), 4 medium (50K–500K), 2 broad (500K+)."
+  },
+  {
+    "id": "agent-competitor",
+    "name": "Competitor Analysis Agent",
+    "role": "Market Intelligence Analyst",
+    "icon": "Users",
+    "color": "#1E6BFF",
+    "delay": 2000,
+    "duration": 3600,
+    "dummyOutput": "Scanning competitor content landscape...\n\n→ Top 3 competitors posting 4–6x/week with 3-day content clusters\n→ Competitor A: Strong LinkedIn presence, weak Instagram (opportunity)\n→ Competitor B: Viral TikTok content, but low conversion-focused posts\n→ Content gap identified: No competitor producing 'behind-the-scenes AI' content\n→ Average engagement rate in your niche: 3.2% — target: 4.8%+\n\nWin strategy: Own the 'AI process transparency' narrative — show how AI powers your workflow. No competitor is doing this effectively."
+  },
+  {
+    "id": "agent-positioning",
+    "name": "Brand Positioning Agent",
+    "role": "Strategic Brand Architect",
+    "icon": "Target",
+    "color": "#A7B0BE",
+    "delay": 2600,
+    "duration": 2400,
+    "dummyOutput": "Mapping brand tone to content opportunities...\n\n→ Brand voice: Premium-intelligent with approachable expertise\n→ Content pillars identified: (1) Education, (2) Proof/Results, (3) Culture, (4) Industry POV\n→ Tone calibration: 60% informative, 25% aspirational, 15% conversational\n→ Visual language: Dark/tech aesthetic reinforces premium positioning\n→ Brand differentiation angle: 'AI-native creator for modern businesses'\n\nPositioning statement: 'We don't just post content — we engineer audience relationships at scale.'"
+  },
+  {
+    "id": "agent-reasoning",
+    "name": "Reasoning & Planning Agent",
+    "role": "Campaign Strategist (Claude AI)",
+    "icon": "Brain",
+    "color": "#1E6BFF",
+    "delay": 3200,
+    "duration": 6000,
+    "isReal": true,
+    "dummyOutput": "Synthesizing all agent inputs...\n\nCAMPAIGN STRUCTURE — 30 DAY PLAN\n\nWeek 1: Awareness Foundation\n→ Day 1: Brand intro Reel (hook: 'Most brands waste 80% of their content budget')\n→ Day 3: Educational carousel — '5 things your competitors know about content'\n→ Day 5: LinkedIn thought piece — industry insight with data\n→ Day 7: Community question post — drive comments\n\nWeek 2: Value Demonstration\n→ Behind-the-scenes content series (3 posts)\n→ Case study carousel with real metrics\n→ Short-form testimonial clips\n\nContent Mix: 40% Educational | 30% Behind-scenes | 20% Proof | 10% CTA\nPosting Frequency: Instagram 5x/wk, LinkedIn 3x/wk, TikTok 3x/wk"
+  },
+  {
+    "id": "agent-content",
+    "name": "Content Recommendation Agent",
+    "role": "Content Ideation Engine",
+    "icon": "Sparkles",
+    "color": "#74D0FF",
+    "delay": 4000,
+    "duration": 3000,
+    "dummyOutput": "Generating final content theme recommendations...\n\nCONTENT THEMES (Priority Order):\n\n1. 'The AI Advantage' Series — How AI is reshaping your industry (weekly)\n2. 'Process Exposed' — Behind-the-scenes of how you work (bi-weekly)\n3. 'Data Drop' — One industry stat, beautifully visualized (3x/week)\n4. 'Myth vs Reality' — Debunking misconceptions in your niche (weekly)\n5. 'Client Win Wednesday' — Proof posts with real numbers\n\nContent Calendar: 28 posts across 30 days\nFormats: 12 Reels | 8 Carousels | 5 LinkedIn articles | 3 Stories series\nEstimated Organic Reach: 85,000–140,000 impressions\nEstimated Engagement Rate: 4.6–5.2%"
+  }
+]

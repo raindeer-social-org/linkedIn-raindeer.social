@@ -1,0 +1,62 @@
+[
+  {
+    "id": "avatar-1",
+    "name": "Alex",
+    "style": "Confident & Professional",
+    "description": "Sharp-dressed presenter with authoritative delivery",
+    "placeholder": "https://api.dicebear.com/9.x/avataaars/svg?seed=Alex&backgroundColor=1E6BFF",
+    "voiceType": "Deep, clear",
+    "ethnicity": "Mixed",
+    "gender": "Male"
+  },
+  {
+    "id": "avatar-2",
+    "name": "Sofia",
+    "style": "Warm & Relatable",
+    "description": "Friendly storyteller with an approachable energy",
+    "placeholder": "https://api.dicebear.com/9.x/avataaars/svg?seed=Sofia&backgroundColor=35A7FF",
+    "voiceType": "Warm, conversational",
+    "ethnicity": "Latina",
+    "gender": "Female"
+  },
+  {
+    "id": "avatar-3",
+    "name": "Marcus",
+    "style": "Bold & Energetic",
+    "description": "High-energy creator built for viral formats",
+    "placeholder": "https://api.dicebear.com/9.x/avataaars/svg?seed=Marcus&backgroundColor=74D0FF",
+    "voiceType": "Energetic, upbeat",
+    "ethnicity": "Black",
+    "gender": "Male"
+  },
+  {
+    "id": "avatar-4",
+    "name": "Priya",
+    "style": "Expert & Analytical",
+    "description": "Data-driven communicator with sharp insights",
+    "placeholder": "https://api.dicebear.com/9.x/avataaars/svg?seed=Priya&backgroundColor=1E6BFF",
+    "voiceType": "Clear, measured",
+    "ethnicity": "South Asian",
+    "gender": "Female"
+  },
+  {
+    "id": "avatar-5",
+    "name": "Jordan",
+    "style": "Creative & Artistic",
+    "description": "Gen-Z aesthetic with a strong visual identity",
+    "placeholder": "https://api.dicebear.com/9.x/avataaars/svg?seed=Jordan&backgroundColor=35A7FF",
+    "voiceType": "Expressive, dynamic",
+    "ethnicity": "Mixed",
+    "gender": "Non-binary"
+  },
+  {
+    "id": "avatar-6",
+    "name": "Elena",
+    "style": "Luxury & Aspirational",
+    "description": "Premium lifestyle presenter for high-end brands",
+    "placeholder": "https://api.dicebear.com/9.x/avataaars/svg?seed=Elena&backgroundColor=0B1320",
+    "voiceType": "Refined, sophisticated",
+    "ethnicity": "European",
+    "gender": "Female"
+  }
+]

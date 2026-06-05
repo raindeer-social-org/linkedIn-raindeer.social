@@ -1,0 +1,39 @@
+[
+  {
+    "id": "model-fast",
+    "key": "fast",
+    "name": "Fast & Affordable",
+    "model": "claude-haiku-3-5",
+    "costPerVideo": 0.80,
+    "quality": "Good",
+    "qualityScore": 65,
+    "description": "Optimized for speed and volume. Great for drafts and high-frequency posting.",
+    "features": ["2x faster generation", "Great for short-form", "Lower resolution output"],
+    "color": "#A7B0BE"
+  },
+  {
+    "id": "model-balanced",
+    "key": "balanced",
+    "name": "Balanced",
+    "model": "claude-sonnet-4",
+    "costPerVideo": 2.40,
+    "quality": "Excellent",
+    "qualityScore": 85,
+    "description": "Best balance of quality and cost. Recommended for regular campaigns.",
+    "features": ["HD output", "Smart script optimization", "Brand voice matching"],
+    "color": "#1E6BFF",
+    "recommended": true
+  },
+  {
+    "id": "model-premium",
+    "key": "premium",
+    "name": "Premium",
+    "model": "claude-opus-4",
+    "costPerVideo": 6.00,
+    "quality": "Exceptional",
+    "qualityScore": 99,
+    "description": "Maximum quality for flagship content and campaign hero assets.",
+    "features": ["4K output", "Advanced brand alignment", "Multi-variant generation", "Priority processing"],
+    "color": "#74D0FF"
+  }
+]

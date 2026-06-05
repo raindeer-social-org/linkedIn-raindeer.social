@@ -1,0 +1,229 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Custom Properties ─────────────────────────────────── */
+:root {
+  --brand-bg: #07111F;
+  --brand-surface: #0B1320;
+  --brand-blue: #1E6BFF;
+  --brand-blue-mid: #35A7FF;
+  --brand-blue-glow: #74D0FF;
+  --brand-white: #F5F7FA;
+  --brand-muted: #A7B0BE;
+  --brand-border: rgba(255,255,255,0.08);
+  --brand-border-blue: rgba(30,107,255,0.3);
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #07111F;
+  color: #F5F7FA;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ─── Typography ─────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.font-display {
+  font-family: 'Sora', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #07111F;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(30,107,255,0.5);
+}
+
+/* ─── Glass Card ─────────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-elevated {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.glass-blue {
+  background: rgba(30,107,255,0.08);
+  border: 1px solid rgba(30,107,255,0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ─── Glow Effects ───────────────────────────────────────────── */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(30,107,255,0.33);
+}
+
+.glow-blue-lg {
+  box-shadow: 0 0 40px rgba(30,107,255,0.4);
+}
+
+.glow-blue-sm {
+  box-shadow: 0 0 10px rgba(30,107,255,0.2);
+}
+
+.text-glow {
+  text-shadow: 0 0 20px rgba(30,107,255,0.6);
+}
+
+/* ─── Blue Pulse Animation ───────────────────────────────────── */
+@keyframes pulseBorder {
+  0%, 100% { border-color: rgba(30,107,255,0.3); box-shadow: 0 0 0 rgba(30,107,255,0); }
+  50% { border-color: rgba(30,107,255,0.8); box-shadow: 0 0 20px rgba(30,107,255,0.3); }
+}
+
+.pulse-border {
+  animation: pulseBorder 2s ease-in-out infinite;
+}
+
+/* ─── Logo Glow Pulse ────────────────────────────────────────── */
+@keyframes logoGlow {
+  0%, 100% { filter: drop-shadow(0 0 0px #1E6BFF); }
+  50% { filter: drop-shadow(0 0 12px #1E6BFF); }
+}
+
+.logo-glow {
+  animation: logoGlow 3s ease-in-out infinite;
+}
+
+/* ─── Particle Background ────────────────────────────────────── */
+@keyframes particleDrift {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0.1; }
+  33% { transform: translate(30px, -20px) rotate(120deg); opacity: 0.15; }
+  66% { transform: translate(-20px, 30px) rotate(240deg); opacity: 0.08; }
+  100% { transform: translate(0, 0) rotate(360deg); opacity: 0.1; }
+}
+
+.particle {
+  animation: particleDrift var(--duration, 20s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* ─── Streaming Text Cursor ──────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink::after {
+  content: '▋';
+  color: #1E6BFF;
+  animation: blink 1s ease-in-out infinite;
+  margin-left: 2px;
+}
+
+/* ─── FullCalendar Dark Theme Overrides ──────────────────────── */
+.fc {
+  --fc-border-color: rgba(255,255,255,0.08);
+  --fc-daygrid-event-dot-width: 8px;
+  --fc-today-bg-color: rgba(30,107,255,0.08);
+  --fc-neutral-bg-color: rgba(255,255,255,0.02);
+  --fc-list-event-hover-bg-color: rgba(30,107,255,0.1);
+  --fc-page-bg-color: #07111F;
+  --fc-event-bg-color: #1E6BFF;
+  --fc-event-border-color: transparent;
+  color: #F5F7FA;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.fc .fc-toolbar-title { color: #F5F7FA; font-size: 1.1rem; font-weight: 600; }
+.fc .fc-col-header-cell { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08) !important; }
+.fc .fc-col-header-cell-cushion { color: #A7B0BE; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 4px; }
+.fc .fc-daygrid-day { background: transparent; }
+.fc .fc-daygrid-day:hover { background: rgba(255,255,255,0.02); }
+.fc .fc-daygrid-day-number { color: #A7B0BE; font-size: 12px; padding: 6px 8px; }
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number { color: #1E6BFF; font-weight: 600; }
+.fc .fc-button { background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: #F5F7FA !important; font-size: 13px !important; border-radius: 8px !important; }
+.fc .fc-button:hover { background: rgba(30,107,255,0.2) !important; border-color: rgba(30,107,255,0.4) !important; }
+.fc .fc-button-active { background: rgba(30,107,255,0.3) !important; border-color: rgba(30,107,255,0.5) !important; }
+.fc .fc-scrollgrid { border-color: rgba(255,255,255,0.08) !important; }
+.fc .fc-scrollgrid-section > td { border-color: rgba(255,255,255,0.08) !important; }
+.fc .fc-daygrid-day-frame { min-height: 80px; }
+.fc .fc-event { border-radius: 6px; font-size: 11px; cursor: pointer; }
+.fc .fc-event:hover { filter: brightness(1.2); }
+
+/* ─── Recharts Custom ─────────────────────────────────────────── */
+.recharts-text { fill: #A7B0BE !important; font-family: 'Inter', sans-serif !important; font-size: 12px !important; }
+.recharts-cartesian-axis-line { stroke: rgba(255,255,255,0.08) !important; }
+.recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line { stroke: rgba(255,255,255,0.05) !important; }
+
+/* ─── Radix UI Base Overrides ───────────────────────────────── */
+[data-radix-select-content] { z-index: 9999; }
+[data-radix-popper-content-wrapper] { z-index: 9999; }
+
+/* ─── Range Input ────────────────────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255,255,255,0.1);
+  border-radius: 999px;
+  height: 4px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1E6BFF;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(30,107,255,0.5);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1E6BFF;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 8px rgba(30,107,255,0.5);
+}
+
+/* ─── Selection Color ─────────────────────────────────────────── */
+::selection {
+  background: rgba(30,107,255,0.3);
+  color: #F5F7FA;
+}

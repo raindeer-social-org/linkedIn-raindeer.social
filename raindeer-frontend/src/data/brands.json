@@ -1,0 +1,28 @@
+[
+  {
+    "id": "brand-1",
+    "brandName": "Luminary Studio",
+    "industry": "Design & Creative",
+    "businessType": "Agency",
+    "category": "Creative Services",
+    "website": "luminarystudio.co",
+    "product": "Brand identity and digital design services",
+    "usp": "AI-augmented design at the speed of thought",
+    "audience": "Startups, tech companies, and DTC brands",
+    "tone": { "formal": 35, "serious": 45, "minimal": 60 },
+    "theme": "dark"
+  },
+  {
+    "id": "brand-2",
+    "brandName": "Veloria Health",
+    "industry": "Health & Wellness",
+    "businessType": "Business",
+    "category": "Digital Health",
+    "website": "veloriahealth.com",
+    "product": "AI-powered personalized nutrition plans",
+    "usp": "Precision nutrition backed by genomics and AI",
+    "audience": "Health-conscious professionals aged 28–45",
+    "tone": { "formal": 60, "serious": 55, "minimal": 40 },
+    "theme": "warm"
+  }
+]
