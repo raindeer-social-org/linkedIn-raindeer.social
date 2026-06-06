@@ -2,15 +2,21 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Toaster } from 'react-hot-toast'
 
+import { Navigate } from 'react-router-dom'
 import Landing from '@/pages/Landing'
 import BrandSetup from '@/pages/BrandSetup'
-import Strategy from '@/pages/Strategy'
-import CampaignPlanner from '@/pages/CampaignPlanner'
-import Planning from '@/pages/Planning'
+import ImageUpload from '@/pages/ImageUpload'
 import ContentCalendar from '@/pages/ContentCalendar'
-import FinalReview from '@/pages/FinalReview'
-import GeneratedOutput from '@/pages/GeneratedOutput'
 import Analytics from '@/pages/Analytics'
+import Settings from '@/pages/Settings'
+import Posts from '@/pages/Posts'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { useBrandStore } from '@/store'
+
+function ProtectedRoute({ children }) {
+  const isAuthenticated = useBrandStore(state => state.isAuthenticated)
+  return isAuthenticated ? children : <Navigate to="/" />
+}
 
 export default function App() {
   return (
@@ -30,15 +36,17 @@ export default function App() {
       />
       <AnimatePresence mode="wait">
         <Routes>
-          <Route path="/"          element={<Landing />} />
-          <Route path="/setup"     element={<BrandSetup />} />
-          <Route path="/strategy"  element={<Strategy />} />
-          <Route path="/campaign"  element={<CampaignPlanner />} />
-          <Route path="/planning"  element={<Planning />} />
-          <Route path="/calendar"  element={<ContentCalendar />} />
-          <Route path="/review"    element={<FinalReview />} />
-          <Route path="/output"    element={<GeneratedOutput />} />
-          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/setup" element={<ProtectedRoute><BrandSetup /></ProtectedRoute>} />
+          
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+            <Route index element={<Navigate to="/dashboard/calendar" replace />} />
+            <Route path="calendar" element={<ContentCalendar />} />
+            <Route path="posts" element={<Posts />} />
+            <Route path="photos" element={<ImageUpload />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
         </Routes>
       </AnimatePresence>
     </BrowserRouter>

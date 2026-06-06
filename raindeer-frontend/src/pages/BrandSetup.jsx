@@ -14,7 +14,7 @@ const STEPS = [
   { id: 3, label: 'Target Audience', desc: 'Who you serve' },
   { id: 4, label: 'Campaign Goal', desc: 'Your objective' },
   { id: 5, label: 'Tone & Style', desc: 'Voice calibration' },
-  { id: 6, label: 'Brand Theme', desc: 'Visual identity' },
+  { id: 6, label: 'Social Profiles', desc: 'Connect channels' },
 ]
 
 const OBJECTIVES = [
@@ -24,12 +24,7 @@ const OBJECTIVES = [
   { id: 'Launch', label: 'Launch', desc: 'Announce something new', icon: '🚀' },
 ]
 
-const THEMES = [
-  { id: 'dark', label: 'Dark / Premium', desc: 'Luxury, tech-forward, sophisticated', color: '#07111F', border: '#1E6BFF' },
-  { id: 'bright', label: 'Bright / Bold', desc: 'Energetic, youthful, expressive', color: '#FFF9F0', border: '#FF6B35' },
-  { id: 'warm', label: 'Warm / Human', desc: 'Approachable, authentic, community', color: '#FDF4EC', border: '#E8A87C' },
-  { id: 'tech', label: 'Tech / Clean', desc: 'Minimal, precise, data-driven', color: '#0F1923', border: '#00E5CC' },
-]
+
 
 export default function BrandSetup() {
   const navigate = useNavigate()
@@ -46,7 +41,7 @@ export default function BrandSetup() {
     audienceInterests: store.audienceInterests || '',
     campaignObjective: store.campaignObjective || 'Awareness',
     tone: store.tone || { formal: 50, serious: 50, minimal: 50 },
-    theme: store.theme || 'dark',
+    linkedInConnected: store.linkedInConnected || false,
   })
 
   function update(field, value) {
@@ -57,12 +52,34 @@ export default function BrandSetup() {
     setLocal(prev => ({ ...prev, tone: { ...prev.tone, [key]: value } }))
   }
 
-  function handleNext() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function handleNext() {
     if (step < 6) {
       setStep(s => s + 1)
     } else {
-      store.setBrand(local)
-      navigate('/strategy')
+      setIsLoading(true)
+      try {
+        const res = await fetch(`http://localhost:3001/api/brand/${store.brandId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(local)
+        })
+        const data = await res.json()
+        if (data.success) {
+          toast.success('Brand setup completed successfully!')
+          setStep(1)
+          navigate('/dashboard')
+        } else {
+          console.error('Failed to save brand', data.error)
+          alert('Failed to save brand: ' + data.error)
+        }
+      } catch (err) {
+        console.error('Error saving brand', err)
+        alert('Error connecting to backend')
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -172,31 +189,57 @@ export default function BrandSetup() {
       </div>
     ),
     6: (
-      <div className="grid grid-cols-2 gap-3">
-        {THEMES.map(theme => (
-          <motion.button
-            key={theme.id}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => update('theme', theme.id)}
-            className={cn(
-              'flex flex-col gap-3 p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer',
-              local.theme === theme.id
-                ? 'border-brand-blue shadow-glow-sm'
-                : 'border-white/8 hover:border-white/15'
-            )}
-          >
-            {/* Color preview */}
-            <div className="w-full h-12 rounded-xl border border-white/10" style={{ background: theme.color, borderColor: theme.border }} />
-            <div>
-              <div className="text-sm font-semibold text-brand-white">{theme.label}</div>
-              <div className="text-xs text-brand-muted mt-0.5">{theme.desc}</div>
+      <div className="space-y-6">
+        <p className="text-sm text-brand-muted mb-4">Connect your social accounts to enable auto-publishing.</p>
+        
+        {/* LinkedIn - Interactive */}
+        <div className="glass-elevated rounded-2xl p-5 flex items-center justify-between border border-white/10 hover:border-brand-blue/50 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#0A66C2] rounded-full flex items-center justify-center text-white">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
             </div>
-            {local.theme === theme.id && (
-              <div className="flex items-center gap-1 text-xs text-brand-blue">
-                <Check size={12} /> Selected
+            <div>
+              <div className="font-semibold text-brand-white">LinkedIn</div>
+              <div className="text-xs text-brand-muted">Publish company updates</div>
+            </div>
+          </div>
+          <Button 
+            variant={store.linkedInConnected ? "secondary" : "primary"}
+            onClick={async () => {
+              if (store.linkedInConnected) return;
+              try {
+                // Save progress first so it's not lost
+                await fetch(`http://localhost:3001/api/brand/${store.brandId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(local)
+                });
+                window.location.href = `http://localhost:3001/api/linkedin/auth?brandId=${store.brandId}`;
+              } catch(e) {
+                console.error('Failed to save before redirect', e);
+              }
+            }}
+          >
+            {store.linkedInConnected ? "Connected" : "Save & Connect"}
+          </Button>
+        </div>
+
+        {/* Other Platforms - Coming Soon */}
+        {['Instagram', 'X (Twitter)', 'TikTok'].map(platform => (
+          <div key={platform} className="glass rounded-2xl p-5 flex items-center justify-between border border-white/5 opacity-60">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-brand-muted">
+                <span className="text-xs font-semibold">{platform[0]}</span>
               </div>
-            )}
-          </motion.button>
+              <div>
+                <div className="font-semibold text-brand-white">{platform}</div>
+                <div className="text-xs text-brand-muted">Coming soon</div>
+              </div>
+            </div>
+            <div className="px-3 py-1 bg-white/5 rounded-full text-xs text-brand-muted border border-white/10">
+              Coming Soon
+            </div>
+          </div>
         ))}
       </div>
     ),
@@ -275,8 +318,8 @@ export default function BrandSetup() {
                   <Button variant="ghost" onClick={handleBack} icon={<ChevronLeft size={16} />}>
                     Back
                   </Button>
-                  <Button onClick={handleNext} icon={step === 6 ? undefined : <ChevronRight size={16} />}>
-                    {step === 6 ? 'Complete Setup →' : 'Continue'}
+                  <Button onClick={handleNext} disabled={isLoading} icon={step === 6 && !isLoading ? undefined : <ChevronRight size={16} />}>
+                    {step === 6 ? (isLoading ? 'Saving...' : 'Complete Setup →') : 'Continue'}
                   </Button>
                 </div>
               </div>

@@ -4,7 +4,12 @@ import { persist } from 'zustand/middleware'
 export const useBrandStore = create(
   persist(
     (set) => ({
+      brandId: null,
+      token: null,
+      isAuthenticated: false,
       brandName: '',
+      logoUrl: '',
+      linkedInConnected: false,
       industry: '',
       businessType: '',
       category: '',
@@ -22,7 +27,8 @@ export const useBrandStore = create(
       setTone: (tone) => set({ tone }),
       setTheme: (theme) => set({ theme }),
       reset: () => set({
-        brandName: '', industry: '', businessType: '', category: '',
+        brandId: null, token: null, isAuthenticated: false,
+        brandName: '', logoUrl: '', linkedInConnected: false, industry: '', businessType: '', category: '',
         website: '', product: '', usp: '', audience: '',
         audiencePainPoints: '', audienceInterests: '', campaignObjective: '',
         tone: { formal: 50, serious: 50, minimal: 50 }, theme: 'dark',

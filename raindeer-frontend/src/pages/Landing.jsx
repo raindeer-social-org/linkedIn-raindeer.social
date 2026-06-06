@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import { AnimatedPage } from '@/components/layout/AnimatedPage'
 import { Button } from '@/components/ui'
 import { RaindeerLogo } from '@/components/layout/Navbar'
 import { useBrandStore } from '@/store'
 import { cn } from '@/lib/utils'
+import toast from 'react-hot-toast'
 
 // Platform SVG icons
 function InstagramIcon() {
@@ -65,24 +66,8 @@ function PlatformIconRow() {
   )
 }
 
-
-
-const INDUSTRIES = [
-  'Technology & SaaS', 'E-commerce & Retail', 'Health & Wellness',
-  'Finance & Fintech', 'Education & EdTech', 'Design & Creative',
-  'Food & Beverage', 'Real Estate', 'Fashion & Beauty',
-  'Consulting & Professional Services', 'Media & Entertainment', 'Other'
-]
-
-const BUSINESS_TYPES = [
-  { id: 'individual', label: 'Individual', desc: 'Solo creator or freelancer' },
-  { id: 'business', label: 'Business', desc: 'Startup or established company' },
-  { id: 'agency', label: 'Agency', desc: 'Marketing or creative agency' },
-]
-
 const heroWords = ['Your brand.', 'Your AI.', 'Your content.']
 
-// Floating particle component
 function Particle({ x, y, size, delay, duration }) {
   return (
     <motion.div
@@ -110,12 +95,14 @@ const particles = Array.from({ length: 28 }, (_, i) => ({
 
 export default function Landing() {
   const navigate = useNavigate()
-  const { brandName, industry, businessType, setBrand } = useBrandStore()
-  const [localBrand, setLocalBrand] = useState(brandName || '')
-  const [localIndustry, setLocalIndustry] = useState(industry || '')
-  const [localType, setLocalType] = useState(businessType || '')
+  const setBrandStore = useBrandStore(state => state.setBrand)
+  const { isAuthenticated } = useBrandStore()
+
   const [wordIndex, setWordIndex] = useState(0)
-  const [errors, setErrors] = useState({})
+  const [isLogin, setIsLogin] = useState(true)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -124,31 +111,71 @@ export default function Landing() {
     return () => clearInterval(interval)
   }, [])
 
-  function validate() {
-    const e = {}
-    if (!localBrand.trim()) e.brand = 'Brand name is required'
-    if (!localIndustry) e.industry = 'Please select an industry'
-    if (!localType) e.type = 'Please select a business type'
-    setErrors(e)
-    return Object.keys(e).length === 0
+  useEffect(() => {
+    if (isAuthenticated) {
+      const { category } = useBrandStore.getState()
+      navigate(category ? '/dashboard' : '/setup')
+    }
+  }, []) // Only check on initial mount, handleSubmit handles the rest
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!email || !password) return toast.error('Please fill in all fields')
+
+    setIsLoading(true)
+    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register'
+    
+    try {
+      const res = await fetch(`http://localhost:3001${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+
+      const data = await res.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Authentication failed')
+      }
+
+      // 1. Completely reset the frontend state to wipe any previous user data
+      useBrandStore.getState().reset()
+
+      // 2. If logging in, fetch their specific brand data from the DB
+      if (isLogin) {
+        try {
+          const brandRes = await fetch(`http://localhost:3001/api/brand/${data.brandId}`)
+          const brandData = await brandRes.json()
+          if (brandData.success && brandData.brand) {
+            setBrandStore(brandData.brand)
+          }
+        } catch (e) {
+          console.error("Failed to fetch brand data on login", e)
+        }
+      }
+
+      // 3. Set the auth state
+      setBrandStore({ 
+        brandId: data.brandId, 
+        token: data.token,
+        isAuthenticated: true 
+      })
+      
+      toast.success(isLogin ? 'Welcome back!' : 'Account created!')
+      navigate(isLogin ? '/dashboard' : '/setup')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setIsLoading(false)
+    }
   }
-
-  function handleStart() {
-    if (!validate()) return
-    setBrand({ brandName: localBrand, industry: localIndustry, businessType: localType })
-    navigate('/setup')
-  }
-
-
 
   return (
     <AnimatedPage>
       <div className="relative min-h-screen flex flex-col overflow-hidden bg-brand-bg">
-
         {/* Particle background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {particles.map(p => <Particle key={p.id} {...p} />)}
-          {/* Gradient orbs */}
           <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-5"
             style={{ background: 'radial-gradient(circle, #1E6BFF, transparent)', filter: 'blur(60px)' }} />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full opacity-5"
@@ -180,9 +207,6 @@ export default function Landing() {
 
         {/* Hero */}
         <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-12 text-center">
-
-
-
           {/* Animated headline */}
           <div className="mb-4">
             <AnimatePresence mode="wait">
@@ -212,122 +236,60 @@ export default function Landing() {
             <span className="text-brand-blue-mid">raindeer.social</span> is your AI-powered brand content engine.
           </motion.p>
 
-          {/* Input Card */}
+          {/* Login/Signup Card */}
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.55, duration: 0.5 }}
-            className="w-full max-w-lg glass-elevated rounded-3xl p-8 text-left"
+            className="w-full max-w-sm glass-elevated rounded-3xl p-8 text-left"
           >
-            <h2 className="text-sm font-semibold text-brand-white mb-5 flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-brand-blue/20 flex items-center justify-center text-brand-blue text-xs">1</span>
-              Tell us about your brand
-            </h2>
-
-            {/* Brand Name */}
-            <div className="mb-4">
-              <label className="block text-xs font-medium text-brand-muted mb-1.5">Brand Name *</label>
-              <input
-                type="text"
-                value={localBrand}
-                onChange={e => { setLocalBrand(e.target.value); setErrors(er => ({ ...er, brand: '' })) }}
-                placeholder="e.g. Luminary Studio"
-                className={cn(
-                  'w-full bg-brand-surface border rounded-xl px-4 py-3 text-brand-white placeholder-brand-muted text-sm',
-                  'focus:outline-none focus:border-brand-blue transition-all duration-200',
-                  errors.brand ? 'border-red-500/50' : 'border-white/10 focus:shadow-glow-sm'
-                )}
-              />
-              {errors.brand && <p className="mt-1 text-xs text-red-400">{errors.brand}</p>}
-            </div>
-
-            {/* Industry */}
-            <div className="mb-4">
-              <label className="block text-xs font-medium text-brand-muted mb-1.5">Industry *</label>
-              <select
-                value={localIndustry}
-                onChange={e => { setLocalIndustry(e.target.value); setErrors(er => ({ ...er, industry: '' })) }}
-                className={cn(
-                  'w-full bg-brand-surface border rounded-xl px-4 py-3 text-sm appearance-none cursor-pointer',
-                  'focus:outline-none focus:border-brand-blue transition-all duration-200',
-                  localIndustry ? 'text-brand-white' : 'text-brand-muted',
-                  errors.industry ? 'border-red-500/50' : 'border-white/10'
-                )}
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A7B0BE' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center' }}
+            <div className="flex gap-4 mb-6 border-b border-white/10 pb-2">
+              <button 
+                onClick={() => setIsLogin(true)}
+                className={cn("text-sm font-semibold transition-colors", isLogin ? "text-brand-white border-b-2 border-brand-blue" : "text-brand-muted hover:text-white")}
               >
-                <option value="" className="bg-brand-surface">Select your industry</option>
-                {INDUSTRIES.map(ind => (
-                  <option key={ind} value={ind} className="bg-brand-surface">{ind}</option>
-                ))}
-              </select>
-              {errors.industry && <p className="mt-1 text-xs text-red-400">{errors.industry}</p>}
+                Log In
+              </button>
+              <button 
+                onClick={() => setIsLogin(false)}
+                className={cn("text-sm font-semibold transition-colors", !isLogin ? "text-brand-white border-b-2 border-brand-blue" : "text-brand-muted hover:text-white")}
+              >
+                Create Account
+              </button>
             </div>
 
-            {/* Business Type */}
-            <div className="mb-6">
-              <label className="block text-xs font-medium text-brand-muted mb-2">Business Type *</label>
-              <div className="grid grid-cols-3 gap-2">
-                {BUSINESS_TYPES.map(bt => (
-                  <motion.button
-                    key={bt.id}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => { setLocalType(bt.id); setErrors(er => ({ ...er, type: '' })) }}
-                    className={cn(
-                      'flex flex-col items-center gap-1 p-3 rounded-xl border text-xs transition-all duration-200 cursor-pointer',
-                      localType === bt.id
-                        ? 'border-brand-blue bg-brand-blue/10 text-brand-white'
-                        : 'border-white/8 bg-white/2 text-brand-muted hover:border-white/15'
-                    )}
-                  >
-                    <span className="font-semibold">{bt.label}</span>
-                    <span className="text-center opacity-70 text-[10px] leading-tight">{bt.desc}</span>
-                  </motion.button>
-                ))}
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-brand-muted mb-1.5">Email *</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="name@brand.com"
+                  className="w-full bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-brand-white placeholder-brand-muted text-sm focus:outline-none focus:border-brand-blue transition-all duration-200"
+                  required
+                />
               </div>
-              {errors.type && <p className="mt-1 text-xs text-red-400">{errors.type}</p>}
-            </div>
 
-            {/* CTA */}
-            <Button onClick={handleStart} fullWidth size="lg" className="group">
-              Start Building
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Button>
+              <div className="mb-6">
+                <label className="block text-xs font-medium text-brand-muted mb-1.5">Password *</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-brand-white placeholder-brand-muted text-sm focus:outline-none focus:border-brand-blue transition-all duration-200"
+                  required
+                />
+              </div>
+
+              <Button type="submit" fullWidth size="lg" className="group" disabled={isLoading}>
+                {isLoading ? <Loader2 className="animate-spin" /> : (isLogin ? 'Log In' : 'Create Account')}
+                {!isLoading && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />}
+              </Button>
+            </form>
           </motion.div>
 
-          {/* Platform row */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.75, duration: 0.5 }}
-            className="mt-10 flex flex-col items-center gap-4"
-          >
-            <p className="text-xs text-brand-muted uppercase tracking-widest">Publish to</p>
-            <div className="flex items-center gap-4">
-              {[
-                { name: 'Instagram', bg: '#E1306C', icon: <InstagramIcon /> },
-                { name: 'LinkedIn',  bg: '#0A66C2', icon: <LinkedInIcon /> },
-                { name: 'YouTube',   bg: '#FF0000', icon: <YouTubeIcon /> },
-                { name: 'Twitter',   bg: '#1DA1F2', icon: <TwitterIcon /> },
-              ].map(p => (
-                <motion.div
-                  key={p.name}
-                  whileHover={{ scale: 1.12, y: -2 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col items-center gap-1.5"
-                >
-                  <div
-                    className="w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-lg"
-                    style={{ background: `${p.bg}22`, border: `1px solid ${p.bg}44` }}
-                  >
-                    <span style={{ color: p.bg }}>{p.icon}</span>
-                  </div>
-                  <span className="text-xs text-brand-muted">{p.name}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Bottom tagline */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

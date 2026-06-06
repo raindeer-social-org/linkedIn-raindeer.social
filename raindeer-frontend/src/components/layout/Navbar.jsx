@@ -1,7 +1,8 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Bell, ChevronRight } from 'lucide-react'
+import { Bell, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useBrandStore } from '@/store'
 
 const steps = [
   { path: '/', label: 'Entry', step: 1 },
@@ -17,8 +18,14 @@ const steps = [
 
 export function Navbar() {
   const location = useLocation()
+  const navigate = useNavigate()
   const currentStep = steps.findIndex(s => s.path === location.pathname) + 1
   const isLanding = location.pathname === '/'
+
+  const handleLogout = () => {
+    useBrandStore.getState().reset()
+    navigate('/')
+  }
 
   return (
     <motion.header
@@ -66,6 +73,15 @@ export function Navbar() {
 
       {/* Right Actions */}
       <div className="flex items-center gap-3 ml-auto">
+        {!isLanding && (
+          <button 
+            onClick={handleLogout}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
+            title="Log out"
+          >
+            <LogOut size={16} />
+          </button>
+        )}
         <button className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand-white hover:bg-white/6 transition-all">
           <Bell size={16} />
         </button>
