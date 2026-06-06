@@ -10,6 +10,7 @@ import ContentCalendar from '@/pages/ContentCalendar'
 import Analytics from '@/pages/Analytics'
 import Settings from '@/pages/Settings'
 import Posts from '@/pages/Posts'
+import CarouselMaker from '@/pages/CarouselMaker'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { useBrandStore } from '@/store'
 
@@ -43,6 +44,7 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard/calendar" replace />} />
             <Route path="calendar" element={<ContentCalendar />} />
             <Route path="posts" element={<Posts />} />
+            <Route path="carousel" element={<CarouselMaker />} />
             <Route path="photos" element={<ImageUpload />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<Settings />} />

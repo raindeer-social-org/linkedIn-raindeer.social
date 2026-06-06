@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { RaindeerLogo } from './Navbar'
-import { CalendarDays, Image as ImageIcon, BarChart3, Settings, LogOut, Bell, FileText } from 'lucide-react'
+import { CalendarDays, Image as ImageIcon, BarChart3, Settings, LogOut, Bell, FileText, LayoutTemplate } from 'lucide-react'
 import { useBrandStore } from '@/store'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +17,7 @@ export function DashboardLayout() {
   const links = [
     { to: '/dashboard/calendar', icon: CalendarDays, label: 'Calendar' },
     { to: '/dashboard/posts', icon: FileText, label: 'Posts' },
+    { to: '/dashboard/carousel', icon: LayoutTemplate, label: 'Carousel Maker' },
     { to: '/dashboard/photos', icon: ImageIcon, label: 'Photo Library' },
     { to: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/dashboard/settings', icon: Settings, label: 'Settings' },

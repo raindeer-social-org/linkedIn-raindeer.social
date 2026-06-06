@@ -157,6 +157,9 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+const multer = require('multer');
+const upload = multer();
+
 // Delete a post
 router.delete('/:id', async (req, res) => {
     try {
@@ -166,6 +169,114 @@ router.delete('/:id', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('Error deleting post:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Direct Publish PDF Carousel to LinkedIn
+router.post('/carousel-publish/:brandId', upload.single('document'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'No PDF document provided' });
+        }
+
+        const brand = await prisma.brand.findUnique({ where: { id: req.params.brandId } });
+        if (!brand || !brand.linkedinAccessToken || !brand.linkedinPersonId) {
+            return res.status(400).json({ success: false, error: 'Not connected to LinkedIn' });
+        }
+
+        const title = req.body.title || 'LinkedIn Carousel';
+
+        // 1. Register Document Upload
+        const registerBody = {
+            registerUploadRequest: {
+                recipes: ["urn:li:digitalmediaRecipe:feedshare-document"],
+                owner: `urn:li:person:${brand.linkedinPersonId}`,
+                serviceRelationships: [{
+                    relationshipType: "OWNER",
+                    identifier: "urn:li:userGeneratedContent"
+                }]
+            }
+        };
+
+        const regRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${brand.linkedinAccessToken}`,
+                'Content-Type': 'application/json',
+                'X-Restli-Protocol-Version': '2.0.0'
+            },
+            body: JSON.stringify(registerBody)
+        });
+
+        const regData = await regRes.json();
+        if (!regRes.ok) throw new Error(`LinkedIn Register Error: ${JSON.stringify(regData)}`);
+
+        const assetUrn = regData.value.asset;
+        const uploadUrl = regData.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
+
+        // 2. Upload the PDF Binary Buffer to LinkedIn
+        const uploadRes = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${brand.linkedinAccessToken}`,
+                'Content-Type': 'application/pdf'
+            },
+            body: req.file.buffer
+        });
+
+        if (!uploadRes.ok) throw new Error(`LinkedIn Document Upload Failed: ${uploadRes.status}`);
+
+        // 3. Publish the Document Post
+        const linkedInBody = {
+            author: `urn:li:person:${brand.linkedinPersonId}`,
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+                'com.linkedin.ugc.ShareContent': {
+                    shareCommentary: {
+                        text: `Check out my latest carousel on ${title}! 🚀`
+                    },
+                    shareMediaCategory: 'DOCUMENT',
+                    media: [{
+                        status: 'READY',
+                        media: assetUrn,
+                        title: title
+                    }]
+                }
+            },
+            visibility: {
+                'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
+            }
+        };
+
+        const liRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${brand.linkedinAccessToken}`,
+                'Content-Type': 'application/json',
+                'X-Restli-Protocol-Version': '2.0.0'
+            },
+            body: JSON.stringify(linkedInBody)
+        });
+
+        const liData = await liRes.json();
+        if (!liRes.ok) throw new Error(`LinkedIn Publish Error: ${JSON.stringify(liData)}`);
+
+        // Log the published post in our DB
+        await prisma.post.create({
+            data: {
+                brandId: brand.id,
+                content: `Published Carousel: ${title}`,
+                date: new Date(),
+                status: 'PUBLISHED',
+                type: 'Carousel'
+            }
+        });
+
+        res.json({ success: true, post: liData });
+
+    } catch (error) {
+        console.error('LinkedIn Carousel Publish Error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
