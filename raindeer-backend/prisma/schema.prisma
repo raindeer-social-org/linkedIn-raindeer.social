@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Brand {
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  password           String
+  linkedInConnected  Boolean  @default(false)
+  linkedinAccessToken String?
+  linkedinPersonId    String?
+  logoUrl            String?
+  brandName          String?
+  category           String?
+  website            String?
+  product            String?
+  usp                String?
+  audience           String?
+  audiencePainPoints String?
+  audienceInterests  String?
+  campaignObjective  String?
+  toneFormal         Int      @default(50)
+  toneSerious        Int      @default(50)
+  toneMinimal        Int      @default(50)
+  theme              String   @default("dark")
+  websiteScrapedData String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  images             Image[]
+  posts              Post[]
+}
+
+model Image {
+  id          String   @id @default(uuid())
+  brandId     String
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  url         String
+  imagekitId  String
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+
+  posts       Post[]
+}
+
+model Post {
+  id              String   @id @default(uuid())
+  brandId         String
+  brand           Brand    @relation(fields: [brandId], references: [id])
+  imageId         String?
+  image           Image?   @relation(fields: [imageId], references: [id])
+  date            DateTime
+  content         String   @db.Text
+  type            String   @default("LinkedIn Post")
+  status          String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
