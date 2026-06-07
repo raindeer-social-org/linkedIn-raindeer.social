@@ -31,7 +31,7 @@ export default function ContentCalendar() {
   const fetchImages = async () => {
     if (!brandId) return;
     try {
-      const res = await fetch(`http://localhost:3001/api/upload/brand/${brandId}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload/brand/${brandId}`)
       const data = await res.json()
       if (data.success) {
         setAvailableImages(data.images)
@@ -44,7 +44,7 @@ export default function ContentCalendar() {
   const fetchPosts = async () => {
     if (!brandId) return;
     try {
-      const res = await fetch(`http://localhost:3001/api/posts/brand/${brandId}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/brand/${brandId}`)
       const data = await res.json()
       if (data.success) {
         setPosts(data.posts)
@@ -82,7 +82,7 @@ export default function ContentCalendar() {
       for (const img of availableImages) {
         currentDate.setDate(currentDate.getDate() + 1)
         
-        await fetch('http://localhost:3001/api/generate', {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -123,7 +123,7 @@ export default function ContentCalendar() {
     const toastId = toast.loading('AI is crafting your LinkedIn post...')
 
     try {
-      const res = await fetch('http://localhost:3001/api/generate', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -149,7 +149,7 @@ export default function ContentCalendar() {
 
   async function handlePush(post) {
     try {
-      const res = await fetch(`http://localhost:3001/api/posts/${post.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'PUBLISHED' })

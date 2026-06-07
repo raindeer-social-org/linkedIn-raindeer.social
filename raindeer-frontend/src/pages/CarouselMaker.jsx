@@ -46,7 +46,7 @@ export default function CarouselMaker() {
       // Send only user and assistant messages that contain strings (instructions)
       const apiMessages = updatedMessages.filter(m => typeof m.content === 'string')
 
-      const res = await fetch('http://localhost:3001/api/generate/carousel', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/generate/carousel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ brandId, messages: apiMessages })
@@ -107,7 +107,7 @@ export default function CarouselMaker() {
       formData.append('document', pdfBlob, 'carousel.pdf')
       formData.append('title', slides[0].title || 'LinkedIn Carousel')
 
-      const uploadRes = await fetch(`http://localhost:3001/api/posts/carousel-publish/${brandId}`, {
+      const uploadRes = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/carousel-publish/${brandId}`, {
         method: 'POST',
         body: formData
       })

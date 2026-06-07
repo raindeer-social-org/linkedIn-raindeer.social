@@ -10,7 +10,7 @@ export default function Analytics() {
 
   useEffect(() => {
     if (!brandId) return
-    fetch(`http://localhost:3001/api/posts/brand/${brandId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/posts/brand/${brandId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {

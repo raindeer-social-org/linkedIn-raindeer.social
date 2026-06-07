@@ -18,7 +18,7 @@ export default function Posts() {
   const fetchLocalPosts = async () => {
     if (!brandId) return
     try {
-      const res = await fetch(`http://localhost:3001/api/posts/brand/${brandId}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/brand/${brandId}`)
       const data = await res.json()
       if (data.success) {
         setLocalPosts(data.posts)
@@ -32,7 +32,7 @@ export default function Posts() {
     if (!brandId) return
     setIsLoading(true)
     try {
-      const res = await fetch(`http://localhost:3001/api/linkedin/posts/${brandId}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/linkedin/posts/${brandId}`)
       const data = await res.json()
       if (data.success) {
         setLinkedinPosts(data.posts)

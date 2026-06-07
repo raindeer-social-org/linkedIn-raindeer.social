@@ -126,7 +126,7 @@ export default function Landing() {
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register'
     
     try {
-      const res = await fetch(`http://localhost:3001${endpoint}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -144,7 +144,7 @@ export default function Landing() {
       // 2. If logging in, fetch their specific brand data from the DB
       if (isLogin) {
         try {
-          const brandRes = await fetch(`http://localhost:3001/api/brand/${data.brandId}`)
+          const brandRes = await fetch(`${import.meta.env.VITE_API_URL}/api/brand/${data.brandId}`)
           const brandData = await brandRes.json()
           if (brandData.success && brandData.brand) {
             setBrandStore(brandData.brand)

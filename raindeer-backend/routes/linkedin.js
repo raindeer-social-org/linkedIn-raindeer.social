@@ -29,11 +29,11 @@ router.get('/callback', async (req, res) => {
 
     if (error) {
         console.error('LinkedIn Auth Error:', error, error_description);
-        return res.redirect(`http://localhost:5175/dashboard/settings?error=${encodeURIComponent(error_description)}`);
+        return res.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?error=${encodeURIComponent(error_description)}`);
     }
 
     if (!code || !brandId) {
-        return res.redirect(`http://localhost:5175/dashboard/settings?error=InvalidRequest`);
+        return res.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?error=InvalidRequest`);
     }
 
     try {
@@ -88,11 +88,11 @@ router.get('/callback', async (req, res) => {
         });
 
         // Redirect back to frontend
-        res.redirect('http://localhost:5175/dashboard/settings?linkedin=success');
+        res.redirect('${process.env.FRONTEND_URL}/dashboard/settings?linkedin=success');
 
     } catch (err) {
         console.error('LinkedIn Callback Error:', err);
-        res.redirect(`http://localhost:5175/dashboard/settings?error=${encodeURIComponent(err.message)}`);
+        res.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?error=${encodeURIComponent(err.message)}`);
     }
 });
 

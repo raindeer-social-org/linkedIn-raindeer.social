@@ -59,7 +59,7 @@ export default function Settings() {
       uploadData.append('brandId', store.brandId)
       uploadData.append('image', file)
 
-      const res = await fetch('http://localhost:3001/api/upload/logo', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload/logo`, {
         method: 'POST',
         body: uploadData
       })
@@ -68,7 +68,7 @@ export default function Settings() {
       if (!data.success) throw new Error(data.error)
 
       // Now save the logoUrl to the Brand
-      const updateRes = await fetch(`http://localhost:3001/api/brand/${store.brandId}`, {
+      const updateRes = await fetch(`${import.meta.env.VITE_API_URL}/api/brand/${store.brandId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ logoUrl: data.url })
@@ -91,7 +91,7 @@ export default function Settings() {
     if (!store.brandId) return
     setIsSaving(true)
     try {
-      const res = await fetch(`http://localhost:3001/api/brand/${store.brandId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/brand/${store.brandId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -220,7 +220,7 @@ export default function Settings() {
                 </div>
               ) : (
                 <Button 
-                  onClick={() => window.location.href = `http://localhost:3001/api/linkedin/auth?brandId=${store.brandId}`} 
+                  onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/api/linkedin/auth?brandId=${store.brandId}`} 
                   className="bg-[#0A66C2] hover:bg-[#004182] text-white gap-2"
                 >
                   <LinkIcon size={16} /> Connect Account

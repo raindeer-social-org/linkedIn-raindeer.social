@@ -20,7 +20,7 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
     setIsGenerating(true);
     const toastId = toast.loading('AI is rewriting your post...');
     try {
-      const res = await fetch('http://localhost:3001/api/generate/edit', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/generate/edit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, instruction })
@@ -43,7 +43,7 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
   const handleSave = async (status) => {
     setIsSaving(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/posts/${post.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, status })

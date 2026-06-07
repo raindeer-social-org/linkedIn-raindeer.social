@@ -19,7 +19,7 @@ export default function ImageUpload() {
   const fetchLibrary = async () => {
     if (!brandId) return
     try {
-      const res = await fetch(`http://localhost:3001/api/upload/brand/${brandId}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload/brand/${brandId}`)
       const data = await res.json()
       if (data.success) {
         setLibraryImages(data.images)
@@ -75,7 +75,7 @@ export default function ImageUpload() {
         formData.append('image', img.file)
         formData.append('description', img.description)
 
-        const res = await fetch('http://localhost:3001/api/upload', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload`, {
           method: 'POST',
           body: formData
         })

@@ -60,7 +60,7 @@ export default function BrandSetup() {
     } else {
       setIsLoading(true)
       try {
-        const res = await fetch(`http://localhost:3001/api/brand/${store.brandId}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/brand/${store.brandId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(local)
@@ -209,12 +209,12 @@ export default function BrandSetup() {
               if (store.linkedInConnected) return;
               try {
                 // Save progress first so it's not lost
-                await fetch(`http://localhost:3001/api/brand/${store.brandId}`, {
+                await fetch(`${import.meta.env.VITE_API_URL}/api/brand/${store.brandId}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(local)
                 });
-                window.location.href = `http://localhost:3001/api/linkedin/auth?brandId=${store.brandId}`;
+                window.location.href = `${import.meta.env.VITE_API_URL}/api/linkedin/auth?brandId=${store.brandId}`;
               } catch(e) {
                 console.error('Failed to save before redirect', e);
               }
