@@ -1,6 +1,79 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../lib/prisma');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev';
+
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ success: false, error: 'Access token required' });
+    }
+    
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ success: false, error: 'Invalid token' });
+        }
+        req.brandId = decoded.brandId;
+        next();
+    });
+};
+
+// Get all posts for the authenticated brand
+router.get('/', authenticateToken, async (req, res) => {
+    try {
+        const posts = await prisma.post.findMany({
+            where: { brandId: req.brandId },
+            include: { image: true },
+            orderBy: { date: 'asc' }
+        });
+        res.json(posts);
+    } catch (error) {
+        console.error('Error fetching posts:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Reschedule a post
+router.patch('/:id/reschedule', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, scheduledTime } = req.body;
+        
+        if (!date) {
+            return res.status(400).json({ success: false, error: 'Date is required' });
+        }
+
+        const existingPost = await prisma.post.findUnique({
+            where: { id }
+        });
+
+        if (!existingPost) {
+            return res.status(404).json({ success: false, error: 'Post not found' });
+        }
+
+        if (existingPost.brandId !== req.brandId) {
+            return res.status(403).json({ success: false, error: 'Unauthorized' });
+        }
+
+        const updatedPost = await prisma.post.update({
+            where: { id },
+            data: {
+                date: new Date(date),
+                scheduledTime: scheduledTime || null
+            },
+            include: { image: true }
+        });
+
+        res.status(200).json(updatedPost);
+    } catch (error) {
+        console.error('Error rescheduling post:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 // Get all posts for a brand
 router.get('/brand/:brandId', async (req, res) => {

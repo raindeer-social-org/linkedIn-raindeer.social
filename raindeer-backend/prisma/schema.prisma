@@ -57,6 +57,8 @@ model Post {
   content         String   @db.Text
   type            String   @default("LinkedIn Post")
   status          String   @default("DRAFT") // DRAFT, PUBLISHED
+  scheduledTime   String?      // "HH:MM" 24hr format e.g. "09:00"
+  duration        Int?         @default(30)  // block duration in minutes
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

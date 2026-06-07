@@ -88,7 +88,7 @@ router.get('/callback', async (req, res) => {
         });
 
         // Redirect back to frontend
-        res.redirect('${process.env.FRONTEND_URL}/dashboard/settings?linkedin=success');
+        res.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?linkedin=success`);
 
     } catch (err) {
         console.error('LinkedIn Callback Error:', err);
