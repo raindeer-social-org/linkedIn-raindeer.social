@@ -17,7 +17,14 @@ router.post('/', async (req, res) => {
         let imageContext = '';
         let imageToUse = null;
 
-        if (imageId) {
+        if (req.body.imageIds && Array.isArray(req.body.imageIds) && req.body.imageIds.length > 0) {
+            const imagesToUse = await prisma.image.findMany({ where: { id: { in: req.body.imageIds } } });
+            if (imagesToUse.length > 0) {
+                imageToUse = imagesToUse[0]; // Primary image for attachment
+                const descriptions = imagesToUse.map(img => `- Description: "${img.description}" | URL: ${img.url}`).join('\n');
+                imageContext = `The post will include the following images:\n${descriptions}\nMake sure the post caption matches or refers to these images naturally.`;
+            }
+        } else if (imageId) {
             imageToUse = await prisma.image.findUnique({ where: { id: imageId } });
             if (imageToUse) {
                 imageContext = `The post will include an image described as: "${imageToUse.description}". Image URL: ${imageToUse.url}. Make sure the post caption matches or refers to this image naturally.`;
@@ -87,19 +94,58 @@ Requirements:
         else if (rawOutput.startsWith('\`\`\`')) rawOutput = rawOutput.replace(/\`\`\`/g, '').trim();
 
         let postContent = '';
+        let postAnalysis = null;
         try {
-            const parsed = JSON.parse(rawOutput);
-            postContent = parsed.post_content + '\n\n' +
-                '---\n' +
-                '📊 AI Content Analysis:\n' +
-                `• Target Persona: ${parsed.target_persona}\n` +
-                `• Content Type: ${parsed.content_type}\n` +
-                `• Scores: Virality (${parsed.virality_score}/100) | Authority (${parsed.authority_score}/100) | Lead Gen (${parsed.lead_generation_score}/100)\n` +
-                `• Strengths: ${parsed.strengths.join(', ')}\n` +
-                `• Weaknesses: ${parsed.weaknesses.join(', ')}`;
+            let jsonStr = rawOutput;
+            const firstBrace = rawOutput.indexOf('{');
+            const lastBrace = rawOutput.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                jsonStr = rawOutput.substring(firstBrace, lastBrace + 1);
+            }
+            
+            try {
+                const parsed = JSON.parse(jsonStr);
+                postContent = parsed.post_content;
+                postAnalysis = {
+                    virality_score: parsed.virality_score,
+                    authority_score: parsed.authority_score,
+                    lead_generation_score: parsed.lead_generation_score,
+                    target_persona: parsed.target_persona,
+                    content_type: parsed.content_type,
+                    strengths: parsed.strengths || [],
+                    weaknesses: parsed.weaknesses || []
+                };
+            } catch (parseError) {
+                console.error('JSON.parse failed, attempting regex fallback:', parseError.message);
+                const contentMatch = jsonStr.match(/"post_content"\s*:\s*"([\s\S]*?)"\s*,\s*"virality_score"/);
+                if (contentMatch) {
+                    postContent = contentMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                } else {
+                    postContent = rawOutput; // ultimate fallback
+                }
+                
+                // Fallback analysis extraction for scores if JSON parsing failed
+                const viralityMatch = jsonStr.match(/"virality_score"\s*:\s*(\d+)/);
+                const authorityMatch = jsonStr.match(/"authority_score"\s*:\s*(\d+)/);
+                const leadGenMatch = jsonStr.match(/"lead_generation_score"\s*:\s*(\d+)/);
+                const personaMatch = jsonStr.match(/"target_persona"\s*:\s*"([^"]+)"/);
+                const typeMatch = jsonStr.match(/"content_type"\s*:\s*"([^"]+)"/);
+                
+                if (viralityMatch) {
+                    postAnalysis = {
+                        virality_score: viralityMatch ? parseInt(viralityMatch[1]) : null,
+                        authority_score: authorityMatch ? parseInt(authorityMatch[1]) : null,
+                        lead_generation_score: leadGenMatch ? parseInt(leadGenMatch[1]) : null,
+                        target_persona: personaMatch ? personaMatch[1] : 'Unknown',
+                        content_type: typeMatch ? typeMatch[1] : 'Post',
+                        strengths: [],
+                        weaknesses: []
+                    };
+                }
+            }
         } catch (e) {
-            console.error('Failed to parse JSON from LLM:', e, 'Raw:', rawOutput);
-            postContent = rawOutput; // Fallback just in case
+            console.error('Failed to process LLM output:', e);
+            postContent = rawOutput;
         }
 
         // Save as a draft post
@@ -108,6 +154,7 @@ Requirements:
                 brandId,
                 imageId: imageToUse?.id || null,
                 content: postContent,
+                analysis: postAnalysis,
                 date: new Date(date || new Date()),
                 status: 'SCHEDULED',
                 type: 'LinkedIn Post'

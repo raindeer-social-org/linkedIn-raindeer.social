@@ -55,6 +55,7 @@ model Post {
   image           Image?   @relation(fields: [imageId], references: [id])
   date            DateTime
   content         String   @db.Text
+  analysis        Json?
   type            String   @default("LinkedIn Post")
   status          String   @default("DRAFT") // DRAFT, PUBLISHED
   scheduledTime   String?      // "HH:MM" 24hr format e.g. "09:00"

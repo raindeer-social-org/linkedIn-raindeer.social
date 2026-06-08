@@ -27,6 +27,7 @@ export default function ContentCalendar() {
   
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(null)
+  const [selectedImages, setSelectedImages] = useState([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isAutoGenerating, setIsAutoGenerating] = useState(false)
   
@@ -159,10 +160,12 @@ export default function ContentCalendar() {
       return
     }
     setSelectedDate(info.dateStr.split('T')[0])
+    setSelectedImages([])
     setIsPhotoModalOpen(true)
   }
 
-  const handleGenerateFromPhoto = async (image) => {
+  const handleGenerateFromPhotos = async () => {
+    if (selectedImages.length === 0) return
     setIsPhotoModalOpen(false)
     setIsGenerating(true)
     const toastId = toast.loading('AI is crafting your LinkedIn post...')
@@ -173,14 +176,19 @@ export default function ContentCalendar() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           brandId,
-          imageId: image.id,
+          imageIds: selectedImages.map(img => img.id),
           date: selectedDate
         })
       })
       const data = await res.json()
       if (data.success) {
-        toast.success('Post scheduled successfully!', { id: toastId })
-        await fetchPosts()
+        toast.success('Post generated successfully!', { id: toastId })
+        // Update posts list in background
+        fetchPosts()
+        
+        // Open preview with the newly generated post
+        setSelectedPost(data.post)
+        setIsPreviewOpen(true)
       } else {
         throw new Error(data.error)
       }
@@ -432,19 +440,43 @@ export default function ContentCalendar() {
                 
                 <div className="p-5 overflow-y-auto">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {availableImages?.map(img => (
+                    {availableImages?.map(img => {
+                      const isSelected = selectedImages.some(i => i.id === img.id);
+                      return (
                       <button 
                         key={img.id} 
-                        onClick={() => handleGenerateFromPhoto(img)}
-                        className="group text-left relative rounded-xl overflow-hidden border border-white/10 bg-black/50 aspect-square hover:border-brand-blue transition-colors focus:outline-none"
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedImages(selectedImages.filter(i => i.id !== img.id))
+                          } else {
+                            setSelectedImages([...selectedImages, img])
+                          }
+                        }}
+                        className={`group text-left relative rounded-xl overflow-hidden border ${isSelected ? 'border-brand-blue ring-2 ring-brand-blue' : 'border-white/10 hover:border-brand-blue'} bg-black/50 aspect-square transition-all focus:outline-none`}
                       >
-                        <img src={img.url} alt={img.description} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                        <img src={img.url} alt={img.description} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3 flex flex-col justify-end">
                           <p className="text-xs text-white line-clamp-2">{img.description}</p>
                         </div>
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 bg-brand-blue text-white rounded-full p-1 shadow-lg">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                          </div>
+                        )}
                       </button>
-                    ))}
+                    )})}
                   </div>
+                </div>
+                
+                <div className="p-4 border-t border-white/10 flex justify-end gap-3 bg-black/20">
+                  <button onClick={() => setIsPhotoModalOpen(false)} className="px-4 py-2 text-sm text-brand-muted hover:text-white transition-colors">Cancel</button>
+                  <button 
+                    onClick={handleGenerateFromPhotos}
+                    disabled={selectedImages.length === 0}
+                    className="px-4 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Generate Post with {selectedImages.length} {selectedImages.length === 1 ? 'Photo' : 'Photos'}
+                  </button>
                 </div>
               </motion.div>
             </div>

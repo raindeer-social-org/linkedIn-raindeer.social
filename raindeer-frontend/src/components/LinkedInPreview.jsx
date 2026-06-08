@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreHorizontal, X, ThumbsUp, MessageSquare, Repeat2, Send, Sparkles, Loader2, Calendar, Clock, ChevronRight } from 'lucide-react';
+import { MoreHorizontal, X, ThumbsUp, MessageSquare, Repeat2, Send, Sparkles, Loader2, Calendar, Clock, ChevronRight, Trash2, BarChart2, CheckCircle, AlertCircle, Bold, Italic, Eraser } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useBrandStore } from '@/store';
 import toast from 'react-hot-toast';
@@ -13,6 +13,7 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
   const [instruction, setInstruction] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Scheduling state
   const [showScheduler, setShowScheduler] = useState(false);
@@ -21,6 +22,62 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
   const [scheduleDate, setScheduleDate] = useState(existingDate);
   const [scheduleTime, setScheduleTime] = useState(existingTime);
   const [isRescheduling, setIsRescheduling] = useState(false);
+  const editorRef = useRef(null);
+
+  const formatSelection = (type) => {
+    if (!editorRef.current) return;
+    const start = editorRef.current.selectionStart;
+    const end = editorRef.current.selectionEnd;
+    
+    if (start === end) {
+      toast.error('Please select some text to format');
+      return;
+    }
+
+    const selectedText = content.substring(start, end);
+    const chars = [...selectedText];
+    
+    const newText = chars.map(c => {
+      if (type === 'clear') {
+        const code = c.codePointAt(0);
+        if (code >= 0x1D5D4 && code <= 0x1D5ED) return String.fromCharCode(code - 0x1D5D4 + 65);
+        if (code >= 0x1D5EE && code <= 0x1D607) return String.fromCharCode(code - 0x1D5EE + 97);
+        if (code >= 0x1D7EC && code <= 0x1D7F5) return String.fromCharCode(code - 0x1D7EC + 48);
+        if (code >= 0x1D608 && code <= 0x1D621) return String.fromCharCode(code - 0x1D608 + 65);
+        if (code >= 0x1D622 && code <= 0x1D63B) return String.fromCharCode(code - 0x1D622 + 97);
+        if (code >= 0x1D63C && code <= 0x1D655) return String.fromCharCode(code - 0x1D63C + 65);
+        if (code >= 0x1D656 && code <= 0x1D66F) return String.fromCharCode(code - 0x1D656 + 97);
+        return c;
+      }
+
+      if (c.length === 1) {
+        const code = c.charCodeAt(0);
+        if (type === 'bold') {
+          if (code >= 65 && code <= 90) return String.fromCodePoint(code - 65 + 0x1D5D4);
+          if (code >= 97 && code <= 122) return String.fromCodePoint(code - 97 + 0x1D5EE);
+          if (code >= 48 && code <= 57) return String.fromCodePoint(code - 48 + 0x1D7EC);
+        } else if (type === 'italic') {
+          if (code >= 65 && code <= 90) return String.fromCodePoint(code - 65 + 0x1D608);
+          if (code >= 97 && code <= 122) return String.fromCodePoint(code - 97 + 0x1D622);
+        } else if (type === 'boldItalic') {
+          if (code >= 65 && code <= 90) return String.fromCodePoint(code - 65 + 0x1D63C);
+          if (code >= 97 && code <= 122) return String.fromCodePoint(code - 97 + 0x1D656);
+        }
+      }
+      return c;
+    }).join('');
+
+    const updatedContent = content.substring(0, start) + newText + content.substring(end);
+    setContent(updatedContent);
+
+    // Keep focus and selection after update
+    setTimeout(() => {
+      if (editorRef.current) {
+        editorRef.current.focus();
+        editorRef.current.setSelectionRange(start, start + newText.length);
+      }
+    }, 0);
+  };
 
   const handleEditAI = async () => {
     if (!instruction) {
@@ -68,6 +125,28 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
       toast.error(err.message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${post.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success('Post deleted successfully');
+        onUpdate();
+        onClose();
+      } else {
+        throw new Error('Failed to delete post');
+      }
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -143,8 +222,17 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
 
           <div className="p-4 flex-1 overflow-y-auto flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-700">Post Content</label>
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium text-gray-700">Post Content</label>
+                <div className="flex bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
+                  <button onClick={() => formatSelection('bold')} className="p-1.5 hover:bg-gray-100 text-gray-600 border-r border-gray-200" title="Bold"><Bold size={14} /></button>
+                  <button onClick={() => formatSelection('italic')} className="p-1.5 hover:bg-gray-100 text-gray-600 border-r border-gray-200" title="Italic"><Italic size={14} /></button>
+                  <button onClick={() => formatSelection('boldItalic')} className="p-1.5 hover:bg-gray-100 text-gray-600 border-r border-gray-200 font-serif italic font-bold text-xs w-7 h-7 flex items-center justify-center" title="Bold Italic">BI</button>
+                  <button onClick={() => formatSelection('clear')} className="p-1.5 hover:bg-gray-100 text-gray-600" title="Clear Formatting"><Eraser size={14} /></button>
+                </div>
+              </div>
               <textarea
+                ref={editorRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full h-48 p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
@@ -174,10 +262,66 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
               </button>
             </div>
 
+            {post.analysis && (
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                    <BarChart2 size={16} className="text-indigo-500" />
+                    AI Content Analysis
+                  </div>
+                  <div className="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
+                    {post.analysis.target_persona} • {post.analysis.content_type}
+                  </div>
+                </div>
+                <div className="p-4 flex flex-col gap-4">
+                  {/* Scores */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 p-3 rounded-lg border border-orange-100 flex flex-col items-center justify-center">
+                      <div className="text-[11px] text-orange-600 font-medium mb-0.5 uppercase tracking-wide">Virality</div>
+                      <div className="text-xl font-bold text-orange-700">{post.analysis.virality_score}%</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-3 rounded-lg border border-blue-100 flex flex-col items-center justify-center">
+                      <div className="text-[11px] text-blue-600 font-medium mb-0.5 uppercase tracking-wide">Authority</div>
+                      <div className="text-xl font-bold text-blue-700">{post.analysis.authority_score}%</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-3 rounded-lg border border-emerald-100 flex flex-col items-center justify-center">
+                      <div className="text-[11px] text-emerald-600 font-medium mb-0.5 uppercase tracking-wide">Lead Gen</div>
+                      <div className="text-xl font-bold text-emerald-700">{post.analysis.lead_generation_score}%</div>
+                    </div>
+                  </div>
+
+                  {/* Strengths & Weaknesses */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5 mb-2">
+                        <CheckCircle size={14} /> Strengths
+                      </div>
+                      <ul className="text-[11px] text-gray-600 space-y-1.5 list-disc pl-3">
+                        {post.analysis.strengths?.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-amber-600 flex items-center gap-1.5 mb-2">
+                        <AlertCircle size={14} /> Weaknesses
+                      </div>
+                      <ul className="text-[11px] text-gray-600 space-y-1.5 list-disc pl-3">
+                        {post.analysis.weaknesses?.map((w, i) => <li key={i}>{w}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mt-auto flex flex-col gap-2 pt-4">
-              <Button onClick={() => handleSave('DRAFT')} variant="outline" disabled={isSaving} className="w-full text-gray-700 border-gray-300">
-                Save to Drafts
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => handleSave('DRAFT')} variant="outline" disabled={isSaving || isDeleting} className="flex-1 text-gray-700 border-gray-300">
+                  Save to Drafts
+                </Button>
+                <Button onClick={handleDelete} variant="outline" disabled={isSaving || isDeleting} className="text-red-600 border-red-200 hover:bg-red-50 px-3">
+                  <Trash2 size={18} />
+                </Button>
+              </div>
 
               {/* ── Update Schedule (expandable) ── */}
               <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
