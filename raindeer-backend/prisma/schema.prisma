@@ -10,9 +10,11 @@ model Brand {
   id                 String   @id @default(uuid())
   email              String   @unique
   password           String
-  linkedInConnected  Boolean  @default(false)
-  linkedinAccessToken String?
-  linkedinPersonId    String?
+  linkedinPersonalConnected Boolean @default(false)
+  linkedinCompanyConnected  Boolean @default(false)
+  linkedinPersonalToken     String?
+  linkedinCompanyToken      String?
+  linkedinPersonId          String?
   logoUrl            String?
   brandName          String?
   category           String?
@@ -58,6 +60,7 @@ model Post {
   analysis        Json?
   type            String   @default("LinkedIn Post")
   status          String   @default("DRAFT") // DRAFT, PUBLISHED
+  authorUrn       String?  // urn:li:person:ID or urn:li:organization:ID
   scheduledTime   String?      // "HH:MM" 24hr format e.g. "09:00"
   duration        Int?         @default(30)  // block duration in minutes
   createdAt       DateTime @default(now())

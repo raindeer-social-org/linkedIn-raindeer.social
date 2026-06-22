@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MoreHorizontal, X, ThumbsUp, MessageSquare, Repeat2, Send, Sparkles, Loader2, Calendar, Clock, ChevronRight, Trash2, BarChart2, CheckCircle, AlertCircle, Bold, Italic, Eraser } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -23,6 +23,33 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
   const [scheduleTime, setScheduleTime] = useState(existingTime);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const editorRef = useRef(null);
+
+  // Organizations / Destination state
+  const [organizations, setOrganizations] = useState([]);
+  const [selectedTarget, setSelectedTarget] = useState('');
+  const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
+
+  useEffect(() => {
+    if (post && post.brandId) {
+      const fetchOrgs = async () => {
+        setIsLoadingOrgs(true);
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/linkedin/organizations/${post.brandId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setOrganizations(data.organizations || []);
+          }
+        } catch (error) {
+          console.error("Failed to fetch organizations", error);
+        } finally {
+          setIsLoadingOrgs(false);
+        }
+      };
+      fetchOrgs();
+    }
+  }, [post, token]);
 
   const formatSelection = (type) => {
     if (!editorRef.current) return;
@@ -113,7 +140,7 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, status })
+        body: JSON.stringify({ content, status, authorUrn: selectedTarget || undefined })
       });
       if (res.ok) {
         toast.success(status === 'PUBLISHED' ? 'Post pushed to LinkedIn!' : 'Post saved successfully');
@@ -162,7 +189,7 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
       await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, status: 'SCHEDULED' })
+        body: JSON.stringify({ content, status: 'SCHEDULED', authorUrn: selectedTarget || undefined })
       });
 
       // Update date/time via reschedule endpoint
@@ -395,12 +422,33 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
                 </AnimatePresence>
               </div>
 
+              {/* ── Destination Selection ── */}
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label className="text-xs font-semibold text-gray-700">Post Destination</label>
+                <div className="relative">
+                  <select
+                    value={selectedTarget}
+                    onChange={(e) => setSelectedTarget(e.target.value)}
+                    disabled={isLoadingOrgs}
+                    className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 px-4 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium disabled:opacity-60 cursor-pointer hover:border-gray-400 transition-colors"
+                  >
+                    <option value="">👤 Personal Profile</option>
+                    {organizations.map(org => (
+                      <option key={org.urn} value={org.urn}>🏢 {org.name}</option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                  </div>
+                </div>
+              </div>
+
               <Button
                 onClick={() => handleSave('PUBLISHED')}
                 disabled={isSaving}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 mt-2 py-6 text-base font-semibold shadow-md transition-all active:scale-[0.98]"
               >
-                <Send size={16} /> Publish Now
+                <Send size={18} /> Publish Now
               </Button>
             </div>
           </div>

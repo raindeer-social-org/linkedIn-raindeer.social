@@ -77,6 +77,20 @@ export default function CarouselMaker() {
     }
   }
 
+  const [organizations, setOrganizations] = useState([])
+  const [selectedTarget, setSelectedTarget] = useState('personal') // 'personal' or org urn
+
+  // Fetch organizations on mount
+  useState(() => {
+    if (!brandId) return
+    fetch(`${import.meta.env.VITE_API_URL}/api/linkedin/organizations/${brandId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.organizations) setOrganizations(data.organizations)
+      })
+      .catch(console.error)
+  }, [brandId])
+
   const publishToLinkedIn = async () => {
     if (slides.length <= 1) return toast.error('Generate some slides first!')
     setIsPublishing(true)
@@ -106,6 +120,10 @@ export default function CarouselMaker() {
       const formData = new FormData()
       formData.append('document', pdfBlob, 'carousel.pdf')
       formData.append('title', slides[0].title || 'LinkedIn Carousel')
+      
+      if (selectedTarget !== 'personal') {
+        formData.append('targetUrn', selectedTarget)
+      }
 
       const uploadRes = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/carousel-publish/${brandId}`, {
         method: 'POST',
@@ -273,8 +291,18 @@ export default function CarouselMaker() {
         {/* Right Side: Live Preview Canvas */}
         <div className="flex-1 bg-black/40 overflow-y-auto custom-scrollbar flex flex-col relative">
           
-          {/* Sticky Header with Push Button */}
-          <div className="sticky top-0 left-0 right-0 p-6 flex justify-end z-30 bg-gradient-to-b from-[#07111F] to-transparent pointer-events-none">
+          {/* Sticky Header with Push Button and Target Selector */}
+          <div className="sticky top-0 left-0 right-0 p-6 flex justify-end items-center gap-3 z-30 bg-gradient-to-b from-[#07111F] to-transparent pointer-events-none">
+            <select
+              value={selectedTarget}
+              onChange={e => setSelectedTarget(e.target.value)}
+              className="pointer-events-auto bg-[#07111F] border border-white/20 text-white px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-brand-blue"
+            >
+              <option value="personal">Personal Profile</option>
+              {organizations.map(org => (
+                <option key={org.id} value={org.urn}>Company: {org.name}</option>
+              ))}
+            </select>
             <button 
               onClick={publishToLinkedIn}
               disabled={isPublishing || slides.length <= 1}

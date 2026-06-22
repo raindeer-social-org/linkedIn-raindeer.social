@@ -93,7 +93,7 @@ router.get('/brand/:brandId', async (req, res) => {
 // Update post (e.g. edit content, push/publish)
 router.put('/:id', async (req, res) => {
     try {
-        const { content, status } = req.body;
+        const { content, status, authorUrn } = req.body;
         
         // First get the existing post
         const existingPost = await prisma.post.findUnique({
@@ -108,15 +108,20 @@ router.put('/:id', async (req, res) => {
         const updateData = {};
         if (content !== undefined) updateData.content = content;
         if (status !== undefined) updateData.status = status;
+        if (authorUrn !== undefined) updateData.authorUrn = authorUrn;
 
         // If pushing to published, trigger LinkedIn API
         if (status === 'PUBLISHED' && existingPost.status !== 'PUBLISHED') {
-            const { linkedinAccessToken, linkedinPersonId } = existingPost.brand;
+            const { linkedinPersonalToken, linkedinCompanyToken, linkedinPersonId } = existingPost.brand;
             
-            if (!linkedinAccessToken || !linkedinPersonId) {
-                return res.status(400).json({ success: false, error: 'Brand is not connected to LinkedIn' });
-            }
+            const targetUrn = authorUrn || existingPost.authorUrn || `urn:li:person:${linkedinPersonId}`;
+            const isCompany = targetUrn.includes('organization');
+            const token = isCompany ? linkedinCompanyToken : linkedinPersonalToken || linkedinCompanyToken;
 
+            if (!token) {
+                return res.status(400).json({ success: false, error: 'Brand is not connected to LinkedIn for this target' });
+            }
+            
             const postContent = content !== undefined ? content : existingPost.content;
 
             let shareMediaCategory = 'NONE';
@@ -127,7 +132,7 @@ router.put('/:id', async (req, res) => {
                 const registerBody = {
                     registerUploadRequest: {
                         recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
-                        owner: `urn:li:person:${linkedinPersonId}`,
+                        owner: targetUrn,
                         serviceRelationships: [{
                             relationshipType: "OWNER",
                             identifier: "urn:li:userGeneratedContent"
@@ -138,7 +143,7 @@ router.put('/:id', async (req, res) => {
                 const regRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${linkedinAccessToken}`,
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                         'X-Restli-Protocol-Version': '2.0.0'
                     },
@@ -162,7 +167,7 @@ router.put('/:id', async (req, res) => {
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': `Bearer ${linkedinAccessToken}`,
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/octet-stream'
                     },
                     body: imgBuffer
@@ -181,7 +186,7 @@ router.put('/:id', async (req, res) => {
             }
 
             const linkedInBody = {
-                author: `urn:li:person:${linkedinPersonId}`,
+                author: targetUrn,
                 lifecycleState: 'PUBLISHED',
                 specificContent: {
                     'com.linkedin.ugc.ShareContent': {
@@ -203,7 +208,7 @@ router.put('/:id', async (req, res) => {
             const liRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${linkedinAccessToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'X-Restli-Protocol-Version': '2.0.0'
                 },
@@ -254,8 +259,12 @@ router.post('/carousel-publish/:brandId', upload.single('document'), async (req,
         }
 
         const brand = await prisma.brand.findUnique({ where: { id: req.params.brandId } });
-        if (!brand || !brand.linkedinAccessToken || !brand.linkedinPersonId) {
-            return res.status(400).json({ success: false, error: 'Not connected to LinkedIn' });
+        const targetUrn = req.body.targetUrn || `urn:li:person:${brand.linkedinPersonId}`;
+        const isCompany = targetUrn.includes('organization');
+        const token = isCompany ? brand.linkedinCompanyToken : brand.linkedinPersonalToken || brand.linkedinCompanyToken;
+
+        if (!token) {
+            return res.status(400).json({ success: false, error: 'Not connected to LinkedIn for this target' });
         }
 
         const title = req.body.title || 'LinkedIn Carousel';
@@ -264,7 +273,7 @@ router.post('/carousel-publish/:brandId', upload.single('document'), async (req,
         const registerBody = {
             registerUploadRequest: {
                 recipes: ["urn:li:digitalmediaRecipe:feedshare-document"],
-                owner: `urn:li:person:${brand.linkedinPersonId}`,
+                owner: targetUrn,
                 serviceRelationships: [{
                     relationshipType: "OWNER",
                     identifier: "urn:li:userGeneratedContent"
@@ -275,7 +284,7 @@ router.post('/carousel-publish/:brandId', upload.single('document'), async (req,
         const regRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${brand.linkedinAccessToken}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'X-Restli-Protocol-Version': '2.0.0'
             },
@@ -292,7 +301,7 @@ router.post('/carousel-publish/:brandId', upload.single('document'), async (req,
         const uploadRes = await fetch(uploadUrl, {
             method: 'PUT',
             headers: {
-                'Authorization': `Bearer ${brand.linkedinAccessToken}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/pdf'
             },
             body: req.file.buffer
@@ -302,7 +311,7 @@ router.post('/carousel-publish/:brandId', upload.single('document'), async (req,
 
         // 3. Publish the Document Post
         const linkedInBody = {
-            author: `urn:li:person:${brand.linkedinPersonId}`,
+            author: targetUrn,
             lifecycleState: 'PUBLISHED',
             specificContent: {
                 'com.linkedin.ugc.ShareContent': {
@@ -325,7 +334,7 @@ router.post('/carousel-publish/:brandId', upload.single('document'), async (req,
         const liRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${brand.linkedinAccessToken}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'X-Restli-Protocol-Version': '2.0.0'
             },

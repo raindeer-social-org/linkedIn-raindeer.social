@@ -12,6 +12,8 @@ export default function Settings() {
   const store = useBrandStore()
   const fileInputRef = useRef(null)
   const [searchParams, setSearchParams] = useSearchParams()
+  const { setBrand } = store
+  const hasHandledParams = useRef(false)
 
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
@@ -25,18 +27,27 @@ export default function Settings() {
   })
 
   useEffect(() => {
+    if (hasHandledParams.current) return
     const error = searchParams.get('error')
     const success = searchParams.get('linkedin')
     
     if (error) {
       toast.error(`LinkedIn connection failed: ${error}`)
       setSearchParams({})
-    } else if (success === 'success') {
+      hasHandledParams.current = true
+    } else if (success) {
       toast.success('Successfully connected to LinkedIn!')
-      store.setBrand({ linkedInConnected: true })
+      if (success === 'personal') {
+        setBrand({ linkedinPersonalConnected: true })
+      } else if (success === 'company') {
+        setBrand({ linkedinCompanyConnected: true })
+      } else {
+        setBrand({ linkedinCompanyConnected: true, linkedinPersonalConnected: true }) // Fallback
+      }
       setSearchParams({})
+      hasHandledParams.current = true
     }
-  }, [searchParams, setSearchParams, store])
+  }, [searchParams, setSearchParams, setBrand])
 
   const handleInputChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -189,43 +200,87 @@ export default function Settings() {
         <div className="glass rounded-2xl p-8 border border-white/5 shadow-glow-sm">
           <h2 className="text-lg font-semibold text-white mb-6">Connected Applications</h2>
           
-          <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#0A66C2] rounded-lg flex items-center justify-center">
-                <Linkedin className="w-6 h-6 text-white" />
+          <div className="space-y-4">
+            {/* Personal LinkedIn */}
+            <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-[#0A66C2] rounded-lg flex items-center justify-center">
+                  <Linkedin className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white text-sm">Personal LinkedIn</h3>
+                  <p className="text-xs text-brand-muted">Post directly to your personal profile.</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-white text-sm">LinkedIn</h3>
-                <p className="text-xs text-brand-muted">Post directly to your company page.</p>
+              
+              <div className="flex items-center gap-2">
+                {store.linkedinPersonalConnected ? (
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span className="text-xs font-medium text-emerald-500">Connected</span>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        store.setBrand({ linkedinPersonalConnected: false });
+                        toast.success('Disconnected from Personal LinkedIn.');
+                      }} 
+                      variant="outline"
+                      className="text-xs py-1 h-8"
+                    >
+                      Disconnect
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/api/linkedin/auth/personal?brandId=${store.brandId}`} 
+                    className="bg-[#0A66C2] hover:bg-[#004182] text-white gap-2"
+                  >
+                    <LinkIcon size={16} /> Connect Personal
+                  </Button>
+                )}
               </div>
             </div>
-            
-            <div className="flex items-center gap-2">
-              {store.linkedInConnected ? (
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="text-xs font-medium text-emerald-500">Connected</span>
-                  </div>
-                  <Button 
-                    onClick={() => {
-                      store.setBrand({ linkedInConnected: false });
-                      toast.success('Disconnected from LinkedIn. You can now test the real OAuth flow.');
-                    }} 
-                    variant="outline"
-                    className="text-xs py-1 h-8"
-                  >
-                    Disconnect
-                  </Button>
+
+            {/* Company Pages */}
+            <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-[#0A66C2] rounded-lg flex items-center justify-center">
+                  <Linkedin className="w-6 h-6 text-white" />
                 </div>
-              ) : (
-                <Button 
-                  onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/api/linkedin/auth?brandId=${store.brandId}`} 
-                  className="bg-[#0A66C2] hover:bg-[#004182] text-white gap-2"
-                >
-                  <LinkIcon size={16} /> Connect Account
-                </Button>
-              )}
+                <div>
+                  <h3 className="font-semibold text-white text-sm">LinkedIn Company Pages</h3>
+                  <p className="text-xs text-brand-muted">Post directly to company pages you administer.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {store.linkedinCompanyConnected ? (
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span className="text-xs font-medium text-emerald-500">Connected</span>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        store.setBrand({ linkedinCompanyConnected: false });
+                        toast.success('Disconnected from LinkedIn Company Pages.');
+                      }} 
+                      variant="outline"
+                      className="text-xs py-1 h-8"
+                    >
+                      Disconnect
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/api/linkedin/auth/company?brandId=${store.brandId}`} 
+                    className="bg-[#0A66C2] hover:bg-[#004182] text-white gap-2"
+                  >
+                    <LinkIcon size={16} /> Connect Company Pages
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

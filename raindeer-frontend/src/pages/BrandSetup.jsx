@@ -200,13 +200,13 @@ export default function BrandSetup() {
             </div>
             <div>
               <div className="font-semibold text-brand-white">LinkedIn</div>
-              <div className="text-xs text-brand-muted">Publish company updates</div>
+              <div className="text-xs text-brand-muted">Publish to personal or company pages</div>
             </div>
           </div>
           <Button 
-            variant={store.linkedInConnected ? "secondary" : "primary"}
+            variant={(store.linkedinPersonalConnected || store.linkedinCompanyConnected) ? "secondary" : "primary"}
             onClick={async () => {
-              if (store.linkedInConnected) return;
+              if (store.linkedinPersonalConnected || store.linkedinCompanyConnected) return;
               try {
                 // Save progress first so it's not lost
                 await fetch(`${import.meta.env.VITE_API_URL}/api/brand/${store.brandId}`, {
@@ -214,13 +214,13 @@ export default function BrandSetup() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(local)
                 });
-                window.location.href = `${import.meta.env.VITE_API_URL}/api/linkedin/auth?brandId=${store.brandId}`;
+                window.location.href = `${import.meta.env.VITE_API_URL}/api/linkedin/auth/company?brandId=${store.brandId}`;
               } catch(e) {
                 console.error('Failed to save before redirect', e);
               }
             }}
           >
-            {store.linkedInConnected ? "Connected" : "Save & Connect"}
+            {(store.linkedinPersonalConnected || store.linkedinCompanyConnected) ? "Connected" : "Save & Connect (Company)"}
           </Button>
         </div>
 

@@ -9,7 +9,8 @@ export const useBrandStore = create(
       isAuthenticated: false,
       brandName: '',
       logoUrl: '',
-      linkedInConnected: false,
+      linkedinPersonalConnected: false,
+      linkedinCompanyConnected: false,
       industry: '',
       businessType: '',
       category: '',
@@ -28,7 +29,7 @@ export const useBrandStore = create(
       setTheme: (theme) => set({ theme }),
       reset: () => set({
         brandId: null, token: null, isAuthenticated: false,
-        brandName: '', logoUrl: '', linkedInConnected: false, industry: '', businessType: '', category: '',
+        brandName: '', logoUrl: '', linkedinPersonalConnected: false, linkedinCompanyConnected: false, industry: '', businessType: '', category: '',
         website: '', product: '', usp: '', audience: '',
         audiencePainPoints: '', audienceInterests: '', campaignObjective: '',
         tone: { formal: 50, serious: 50, minimal: 50 }, theme: 'dark',
