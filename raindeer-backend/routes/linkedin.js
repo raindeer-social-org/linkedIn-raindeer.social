@@ -29,8 +29,8 @@ router.get('/auth/company', (req, res) => {
     const { brandId } = req.query;
     if (!brandId) return res.status(400).send('brandId required');
 
-    // Scopes needed for company pages: w_organization_social, rw_organization_admin (or r_organization_social)
-    const scopes = encodeURIComponent('w_organization_social rw_organization_admin r_organization_social');
+    // Scopes needed for company pages: w_organization_social, rw_organization_admin (or r_organization_social) + r_basicprofile to identify member
+    const scopes = encodeURIComponent('w_organization_social rw_organization_admin r_organization_social r_basicprofile');
     const state = brandId;
     
     const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${COMPANY_CLIENT_ID}&redirect_uri=${encodeURIComponent(COMPANY_REDIRECT_URI)}&state=${state}&scope=${scopes}`;
@@ -86,13 +86,16 @@ async function handleOAuthCallback(req, res, isPersonal) {
             const userData = JSON.parse(payloadBuffer.toString('utf8'));
             personId = userData.sub;
         } else {
-            // Fallback for Community Management API if OpenID connect wasn't granted or provided
-            const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
+            // Fallback for Community Management API using r_basicprofile instead of OpenID
+            const profileRes = await fetch('https://api.linkedin.com/v2/me', {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             if (profileRes.ok) {
                 const profileData = await profileRes.json();
-                personId = profileData.sub;
+                personId = profileData.id;
+            } else {
+                const errorData = await profileRes.json();
+                console.error('LinkedIn /v2/me Fetch Error:', errorData);
             }
         }
 

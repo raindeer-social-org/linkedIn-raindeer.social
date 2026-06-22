@@ -59,7 +59,8 @@ router.put('/:id', async (req, res) => {
             updateData.toneMinimal = tone.minimal ?? 50;
         }
         if (websiteScrapedData) updateData.websiteScrapedData = websiteScrapedData;
-        if (typeof linkedInConnected === 'boolean') updateData.linkedInConnected = linkedInConnected;
+        if (typeof req.body.linkedinPersonalConnected === 'boolean') updateData.linkedinPersonalConnected = req.body.linkedinPersonalConnected;
+        if (typeof req.body.linkedinCompanyConnected === 'boolean') updateData.linkedinCompanyConnected = req.body.linkedinCompanyConnected;
         if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
 
         const brand = await prisma.brand.update({
