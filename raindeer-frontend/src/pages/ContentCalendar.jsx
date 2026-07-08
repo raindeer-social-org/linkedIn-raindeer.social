@@ -31,6 +31,18 @@ export default function ContentCalendar() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isAutoGenerating, setIsAutoGenerating] = useState(false)
   
+  const [isAutoGenerateModalOpen, setIsAutoGenerateModalOpen] = useState(false)
+  const [bulkSettings, setBulkSettings] = useState({
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    postsPerDay: 1,
+    generationMode: 'prompt_only'
+  })
+  
+  const [isSingleDateModalOpen, setIsSingleDateModalOpen] = useState(false)
+  const [singleDateStrategy, setSingleDateStrategy] = useState('prompt_only')
+  const [singleDateCustomPrompt, setSingleDateCustomPrompt] = useState('')
+  
   const [availableImages, setAvailableImages] = useState([])
   
   const [rescheduleDialog, setRescheduleDialog] = useState({
@@ -114,38 +126,36 @@ export default function ContentCalendar() {
     }
   })
 
-  const handleGenerateCalendar = async () => {
-    if (!availableImages || availableImages.length === 0) {
-      toast.error('No images found. Please upload images first.')
-      return
-    }
+  const handleGenerateCalendar = () => {
+    setIsAutoGenerateModalOpen(true);
+  }
 
-    setIsAutoGenerating(true)
-    const toastId = toast.loading('Auto-generating posts...')
+  const handleBulkGenerate = async () => {
+    setIsAutoGenerateModalOpen(false);
+    setIsAutoGenerating(true);
+    const toastId = toast.loading('Auto-generating bulk posts...');
     
     try {
-      let currentDate = new Date()
-      for (const img of availableImages) {
-        currentDate.setDate(currentDate.getDate() + 1)
-        
-        await fetch(`${import.meta.env.VITE_API_URL}/api/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            brandId,
-            imageId: img.id,
-            date: currentDate.toISOString().split('T')[0]
-          })
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/generate/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          brandId,
+          ...bulkSettings
         })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Generated ${data.count} posts successfully!`, { id: toastId });
+        await fetchPosts();
+      } else {
+        throw new Error(data.error);
       }
-      
-      toast.success('Calendar auto-generated successfully!', { id: toastId })
-      await fetchPosts()
     } catch (error) {
-      console.error(error)
-      toast.error('Error generating calendar', { id: toastId })
+      console.error(error);
+      toast.error(error.message || 'Error generating calendar', { id: toastId });
     } finally {
-      setIsAutoGenerating(false)
+      setIsAutoGenerating(false);
     }
   }
 
@@ -155,13 +165,53 @@ export default function ContentCalendar() {
   }
 
   const handleDateClick = (info) => {
-    if (!availableImages || availableImages.length === 0) {
-      toast.error('Please upload photos in the Photo Library tab first.')
+    setSelectedDate(info.dateStr.split('T')[0])
+    setSingleDateCustomPrompt('')
+    setIsSingleDateModalOpen(true)
+  }
+
+  const handleSingleDateGenerate = async () => {
+    if (singleDateStrategy === 'use_photos') {
+      if (!availableImages || availableImages.length === 0) {
+        toast.error('Please upload photos in the Photo Library tab first.')
+        return
+      }
+      setIsSingleDateModalOpen(false)
+      setSelectedImages([])
+      setIsPhotoModalOpen(true)
       return
     }
-    setSelectedDate(info.dateStr.split('T')[0])
-    setSelectedImages([])
-    setIsPhotoModalOpen(true)
+
+    setIsSingleDateModalOpen(false)
+    setIsGenerating(true)
+    const toastId = toast.loading('AI is crafting your LinkedIn post...')
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/generate/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          brandId,
+          startDate: selectedDate,
+          endDate: selectedDate,
+          postsPerDay: 1,
+          generationMode: singleDateStrategy,
+          customPrompt: singleDateCustomPrompt
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Post generated successfully!', { id: toastId })
+        fetchPosts()
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('Error generating post', { id: toastId })
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleGenerateFromPhotos = async () => {
@@ -177,7 +227,8 @@ export default function ContentCalendar() {
         body: JSON.stringify({
           brandId,
           imageIds: selectedImages.map(img => img.id),
-          date: selectedDate
+          date: selectedDate,
+          customPrompt: singleDateCustomPrompt
         })
       })
       const data = await res.json()
@@ -476,6 +527,140 @@ export default function ContentCalendar() {
                     className="px-4 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Generate Post with {selectedImages.length} {selectedImages.length === 1 ? 'Photo' : 'Photos'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Single Date Modal */}
+        <AnimatePresence>
+          {isSingleDateModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-brand-bg rounded-2xl border border-white/10 w-full max-w-md overflow-hidden flex flex-col shadow-2xl"
+              >
+                <div className="p-5 border-b border-white/10 flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-white">Generate Post</h3>
+                    <p className="text-xs text-brand-muted">For {selectedDate}</p>
+                  </div>
+                  <button onClick={() => setIsSingleDateModalOpen(false)} className="text-brand-muted hover:text-white p-2">✕</button>
+                </div>
+                
+                <div className="p-5 flex flex-col gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-brand-muted">Content Strategy</label>
+                    <select 
+                      value={singleDateStrategy}
+                      onChange={(e) => setSingleDateStrategy(e.target.value)}
+                      className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                    >
+                      <option value="prompt_only">Text + AI Image Prompt (Recommended)</option>
+                      <option value="text_only">Text Only</option>
+                      <option value="use_photos">Use Existing Photos from Library</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-brand-muted">Custom Instructions (Optional)</label>
+                    <textarea 
+                      value={singleDateCustomPrompt}
+                      onChange={(e) => setSingleDateCustomPrompt(e.target.value)}
+                      placeholder="e.g. Write about our new product launch..."
+                      className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue min-h-[80px] resize-none"
+                    />
+                  </div>
+                </div>
+                
+                <div className="p-4 border-t border-white/10 flex justify-end gap-3 bg-black/20">
+                  <button onClick={() => setIsSingleDateModalOpen(false)} className="px-4 py-2 text-sm text-brand-muted hover:text-white transition-colors">Cancel</button>
+                  <button 
+                    onClick={handleSingleDateGenerate}
+                    className="px-4 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <Sparkles size={16} /> Generate Now
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Auto Generate Modal */}
+        <AnimatePresence>
+          {isAutoGenerateModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-brand-bg rounded-2xl border border-white/10 w-full max-w-md overflow-hidden flex flex-col shadow-2xl"
+              >
+                <div className="p-5 border-b border-white/10 flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-white">Auto-Generate Calendar</h3>
+                    <p className="text-xs text-brand-muted">Fill your calendar with AI generated content</p>
+                  </div>
+                  <button onClick={() => setIsAutoGenerateModalOpen(false)} className="text-brand-muted hover:text-white p-2">✕</button>
+                </div>
+                
+                <div className="p-5 flex flex-col gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-brand-muted">Start Date</label>
+                      <input 
+                        type="date" 
+                        value={bulkSettings.startDate}
+                        onChange={(e) => setBulkSettings({ ...bulkSettings, startDate: e.target.value })}
+                        className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-brand-muted">End Date</label>
+                      <input 
+                        type="date" 
+                        value={bulkSettings.endDate}
+                        onChange={(e) => setBulkSettings({ ...bulkSettings, endDate: e.target.value })}
+                        className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-brand-muted">Posts per day</label>
+                    <select 
+                      value={bulkSettings.postsPerDay}
+                      onChange={(e) => setBulkSettings({ ...bulkSettings, postsPerDay: parseInt(e.target.value) })}
+                      className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                    >
+                      <option value={1}>1 Post</option>
+                      <option value={2}>2 Posts</option>
+                      <option value={3}>3 Posts</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-brand-muted">Content Strategy</label>
+                    <select 
+                      value={bulkSettings.generationMode}
+                      onChange={(e) => setBulkSettings({ ...bulkSettings, generationMode: e.target.value })}
+                      className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                    >
+                      <option value="prompt_only">Text + AI Image Prompt (Recommended)</option>
+                      <option value="text_only">Text Only</option>
+                      <option value="use_photos">Use Existing Photos from Library</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="p-4 border-t border-white/10 flex justify-end gap-3 bg-black/20">
+                  <button onClick={() => setIsAutoGenerateModalOpen(false)} className="px-4 py-2 text-sm text-brand-muted hover:text-white transition-colors">Cancel</button>
+                  <button 
+                    onClick={handleBulkGenerate}
+                    className="px-4 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <Sparkles size={16} /> Generate Now
                   </button>
                 </div>
               </motion.div>

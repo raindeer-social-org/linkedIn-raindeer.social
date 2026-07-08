@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreHorizontal, X, ThumbsUp, MessageSquare, Repeat2, Send, Sparkles, Loader2, Calendar, Clock, ChevronRight, Trash2, BarChart2, CheckCircle, AlertCircle, Bold, Italic, Eraser } from 'lucide-react';
+import { MoreHorizontal, X, ThumbsUp, MessageSquare, Repeat2, Send, Sparkles, Loader2, Calendar, Clock, ChevronRight, Trash2, BarChart2, CheckCircle, AlertCircle, Bold, Italic, Eraser, Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useBrandStore } from '@/store';
 import toast from 'react-hot-toast';
@@ -14,6 +14,8 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [customImageUrl, setCustomImageUrl] = useState(post.customImageUrl || '');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Scheduling state
   const [showScheduler, setShowScheduler] = useState(false);
@@ -140,7 +142,7 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, status, authorUrn: selectedTarget || undefined })
+        body: JSON.stringify({ content, status, authorUrn: selectedTarget || undefined, customImageUrl })
       });
       if (res.ok) {
         toast.success(status === 'PUBLISHED' ? 'Post pushed to LinkedIn!' : 'Post saved successfully');
@@ -189,7 +191,7 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
       await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${post.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, status: 'SCHEDULED', authorUrn: selectedTarget || undefined })
+        body: JSON.stringify({ content, status: 'SCHEDULED', authorUrn: selectedTarget || undefined, customImageUrl })
       });
 
       // Update date/time via reschedule endpoint
@@ -230,6 +232,35 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
       return post.scheduledTime ? `${dateStr} at ${post.scheduledTime}` : dateStr;
     } catch { return null; }
   })();
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsUploadingImage(true);
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('brandId', post.brandId);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload/custom-image`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCustomImageUrl(data.url);
+        toast.success('Image uploaded');
+      } else {
+        toast.error(data.error);
+      }
+    } catch (err) {
+      toast.error('Upload failed');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const previewImageUrl = customImageUrl || (post.image && post.image.url);
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -287,6 +318,42 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
               >
                 {isGenerating ? <Loader2 size={16} className="animate-spin" /> : 'Apply AI Magic'}
               </button>
+            </div>
+
+            {/* AI Image Prompt Section */}
+            {post.imagePrompt && (
+              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
+                <div className="flex items-center gap-2 text-indigo-700 font-medium text-sm">
+                  <ImageIcon size={16} />
+                  AI Image Prompt Idea
+                </div>
+                <div className="text-xs text-indigo-900 bg-white p-3 rounded-lg border border-indigo-200">
+                  {post.imagePrompt}
+                </div>
+              </div>
+            )}
+
+            {/* Custom Image Upload Section */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-700">Attach Custom Image</label>
+              <div className="flex items-center gap-3">
+                <label className="flex-1 cursor-pointer flex flex-col items-center justify-center px-4 py-4 bg-white border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                  <UploadCloud size={24} className="text-gray-400 mb-1" />
+                  <span className="text-sm font-medium text-gray-600">
+                    {isUploadingImage ? 'Uploading...' : 'Click to upload image'}
+                  </span>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploadingImage} />
+                </label>
+                {customImageUrl && (
+                  <button
+                    onClick={() => setCustomImageUrl('')}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+                    title="Remove custom image"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                )}
+              </div>
             </div>
 
             {post.analysis && (
@@ -491,9 +558,9 @@ export default function LinkedInPreview({ post, brandName, avatar, onClose, onUp
                 </div>
               </div>
 
-              {post.image && (
+              {previewImageUrl && (
                 <div className="w-full">
-                  <img src={post.image.url} alt="Post content" className="w-full object-cover max-h-[400px]" />
+                  <img src={previewImageUrl} alt="Post content" className="w-full object-cover max-h-[400px]" />
                 </div>
               )}
 
