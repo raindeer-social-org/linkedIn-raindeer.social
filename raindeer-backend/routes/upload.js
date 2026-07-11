@@ -40,6 +40,34 @@ router.post('/logo', upload.single('image'), async (req, res) => {
     }
 });
 
+router.post('/custom-image', upload.single('image'), async (req, res) => {
+    try {
+        const { brandId } = req.body;
+        const file = req.file;
+
+        if (!file) return res.status(400).json({ success: false, error: 'No image provided' });
+        if (!brandId) return res.status(400).json({ success: false, error: 'No brandId provided' });
+
+        // Upload directly to ImageKit
+        const uploadResponse = await new Promise((resolve, reject) => {
+            imagekit.upload({
+                file: file.buffer,
+                fileName: file.originalname || 'custom-post-image.jpg',
+                folder: `/raindeer/${brandId}/custom-images`
+            }, (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            });
+        });
+
+        // Return URL without saving to Image table
+        res.status(201).json({ success: true, url: uploadResponse.url });
+    } catch (error) {
+        console.error('Error uploading custom image:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 router.post('/', upload.single('image'), async (req, res) => {
     try {
         const { brandId, description } = req.body;

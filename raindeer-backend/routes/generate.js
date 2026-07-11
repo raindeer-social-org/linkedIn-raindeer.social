@@ -7,7 +7,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_1 });
 
 router.post('/', async (req, res) => {
     try {
-        const { brandId, imageId, date } = req.body;
+        const { brandId, imageId, date, customPrompt } = req.body;
         
         if (!brandId) return res.status(400).json({ success: false, error: 'brandId required' });
 
@@ -51,12 +51,14 @@ Serious: ${brand.toneSerious}/100 (0=Playful, 100=Serious)
 Minimal: ${brand.toneMinimal}/100 (0=Bold, 100=Minimal)
 
 ${imageContext}
+${customPrompt ? `\nUser's Custom Instructions for this post:\n"${customPrompt}"\nMake sure to incorporate these instructions prominently.` : ''}
 
 Requirements:
 - The post should be optimized for LinkedIn (use spacing, engaging hook, valuable body, clear call to action).
 - Include 3-5 relevant hashtags at the end.
 - Output MUST be a valid JSON object matching the exact structure below.
 - Do NOT output any markdown code blocks around the JSON (e.g. \`\`\`json). Just raw JSON.
+- Include a highly descriptive \`image_prompt\` for an AI image generator (like Midjourney or DALL-E) that perfectly matches the post content. Make it detailed, specifying style, lighting, and subjects.
 
 ### LinkedIn Virality Matrix Guidelines (CRITICAL):
 1. **Hook Strength:** The first 2-3 lines must create an information gap or emotional response (Contrarian, Failure, Data Surprise, Transformation, or Mistake). Do NOT use generic statements.
@@ -70,6 +72,7 @@ Requirements:
 ### Output JSON Format:
 {
  "post_content": "The actual LinkedIn post text goes here",
+ "image_prompt": "A highly detailed description of an image for this post...",
  "virality_score": 84,
  "authority_score": 91,
  "lead_generation_score": 88,
@@ -94,6 +97,7 @@ Requirements:
         else if (rawOutput.startsWith('\`\`\`')) rawOutput = rawOutput.replace(/\`\`\`/g, '').trim();
 
         let postContent = '';
+        let imagePrompt = null;
         let postAnalysis = null;
         try {
             let jsonStr = rawOutput;
@@ -106,6 +110,7 @@ Requirements:
             try {
                 const parsed = JSON.parse(jsonStr);
                 postContent = parsed.post_content;
+                imagePrompt = parsed.image_prompt;
                 postAnalysis = {
                     virality_score: parsed.virality_score,
                     authority_score: parsed.authority_score,
@@ -153,6 +158,7 @@ Requirements:
             data: {
                 brandId,
                 imageId: imageToUse?.id || null,
+                imagePrompt: imagePrompt || null,
                 content: postContent,
                 analysis: postAnalysis,
                 date: new Date(date || new Date()),
@@ -272,4 +278,176 @@ JSON Array Format:
     }
 });
 
+router.post('/bulk', async (req, res) => {
+    try {
+        const { brandId, startDate, endDate, postsPerDay = 1, generationMode = 'prompt_only', customPrompt } = req.body;
+        
+        if (!brandId || !startDate || !endDate) {
+            return res.status(400).json({ success: false, error: 'Missing required parameters' });
+        }
+
+        const brand = await prisma.brand.findUnique({ where: { id: brandId } });
+        if (!brand) return res.status(404).json({ success: false, error: 'Brand not found' });
+
+        let availableImages = [];
+        if (generationMode === 'use_photos') {
+            availableImages = await prisma.image.findMany({ where: { brandId } });
+            if (availableImages.length === 0) {
+                return res.status(400).json({ success: false, error: 'No photos available for this brand.' });
+            }
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        let currentDate = new Date(start);
+        
+        let generatedPostsCount = 0;
+        let imageIndex = 0;
+
+        // Loop through each day
+        while (currentDate <= end) {
+            for (let i = 0; i < postsPerDay; i++) {
+                let imageId = null;
+                if (generationMode === 'use_photos' && availableImages.length > 0) {
+                    imageId = availableImages[imageIndex % availableImages.length].id;
+                    imageIndex++;
+                }
+
+                // Call the existing logic essentially, but directly using Groq to avoid internal fetch
+                let imageContext = '';
+                let imageToUse = null;
+
+                if (imageId) {
+                    imageToUse = availableImages.find(img => img.id === imageId);
+                    if (imageToUse) {
+                        imageContext = `The post will include an image described as: "${imageToUse.description}". Image URL: ${imageToUse.url}. Make sure the post caption matches or refers to this image naturally.`;
+                    }
+                } else if (generationMode === 'prompt_only' || generationMode === 'text_only') {
+                    imageContext = 'No specific image is provided. Please generate a highly creative image_prompt that fits the post context.';
+                }
+
+                const prompt = `
+You are an expert social media manager specializing in LinkedIn.
+Please write a highly engaging, professional yet authentic LinkedIn post for the following brand:
+
+Brand Name: ${brand.brandName}
+Product/Service: ${brand.product || 'N/A'}
+Unique Selling Point: ${brand.usp || 'N/A'}
+Target Audience: ${brand.audience || 'N/A'}
+Audience Pain Points: ${brand.audiencePainPoints || 'N/A'}
+Campaign Objective: ${brand.campaignObjective || 'Awareness'}
+
+Context from their website:
+${brand.websiteScrapedData ? brand.websiteScrapedData.slice(0, 2000) : 'N/A'}
+
+Tone of Voice:
+Formal: ${brand.toneFormal}/100 (0=Casual, 100=Formal)
+Serious: ${brand.toneSerious}/100 (0=Playful, 100=Serious)
+Minimal: ${brand.toneMinimal}/100 (0=Bold, 100=Minimal)
+
+${imageContext}
+${customPrompt ? `\nUser's Custom Instructions for this post:\n"${customPrompt}"\nMake sure to incorporate these instructions prominently.` : ''}
+
+Requirements:
+- The post should be optimized for LinkedIn (use spacing, engaging hook, valuable body, clear call to action).
+- Include 3-5 relevant hashtags at the end.
+- Output MUST be a valid JSON object matching the exact structure below.
+- Do NOT output any markdown code blocks around the JSON (e.g. \`\`\`json). Just raw JSON.
+- Include a highly descriptive \`image_prompt\` for an AI image generator (like Midjourney or DALL-E) that perfectly matches the post content. Make it detailed, specifying style, lighting, and subjects.
+
+### LinkedIn Virality Matrix Guidelines (CRITICAL):
+1. **Hook Strength:** The first 2-3 lines must create an information gap or emotional response (Contrarian, Failure, Data Surprise, Transformation, or Mistake). Do NOT use generic statements.
+2. **Audience Relevance:** Content MUST resonate with a specific audience, preferably addressing a specific pain-point.
+3. **Emotional Activation:** Evoke Surprise, Curiosity, Aspiration, Validation, Fear, Anger, or Inspiration.
+4. **Story Quality:** Structure as: Situation -> Problem -> Attempt -> Failure -> Lesson -> Outcome. 
+5. **Knowledge Density:** Include actionable advice (Frameworks, Checklists, Templates, Step-by-step processes).
+6. **Comment Potential:** End with a strong CTA that invites a specific answer.
+7. **Share Potential:** Make it feel like an industry report, original research, or a highly valuable framework.
+
+### Output JSON Format:
+{
+ "post_content": "The actual LinkedIn post text goes here",
+ "image_prompt": "A highly detailed description of an image for this post...",
+ "virality_score": 84,
+ "authority_score": 91,
+ "lead_generation_score": 88,
+ "target_persona": "SME Founder",
+ "content_type": "Case Study",
+ "strengths": ["...", "..."],
+ "weaknesses": ["...", "..."]
+}
+                `.trim();
+
+                const chatCompletion = await groq.chat.completions.create({
+                    messages: [{ role: 'user', content: prompt }],
+                    model: 'llama-3.1-8b-instant',
+                    temperature: 0.8, // Slightly higher for more variety in bulk
+                    max_tokens: 1500,
+                });
+
+                let rawOutput = chatCompletion.choices[0]?.message?.content || '';
+                if (rawOutput.startsWith('```json')) rawOutput = rawOutput.replace(/```json/g, '').replace(/```/g, '').trim();
+                else if (rawOutput.startsWith('```')) rawOutput = rawOutput.replace(/```/g, '').trim();
+
+                let postContent = '';
+                let imagePrompt = null;
+                let postAnalysis = null;
+                
+                try {
+                    let jsonStr = rawOutput;
+                    const firstBrace = rawOutput.indexOf('{');
+                    const lastBrace = rawOutput.lastIndexOf('}');
+                    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                        jsonStr = rawOutput.substring(firstBrace, lastBrace + 1);
+                    }
+                    const parsed = JSON.parse(jsonStr);
+                    postContent = parsed.post_content;
+                    imagePrompt = parsed.image_prompt;
+                    postAnalysis = {
+                        virality_score: parsed.virality_score,
+                        authority_score: parsed.authority_score,
+                        lead_generation_score: parsed.lead_generation_score,
+                        target_persona: parsed.target_persona,
+                        content_type: parsed.content_type,
+                        strengths: parsed.strengths || [],
+                        weaknesses: parsed.weaknesses || []
+                    };
+                } catch (e) {
+                    console.error('Failed to parse LLM output in bulk gen', e);
+                    postContent = rawOutput;
+                }
+
+                // Assign a time (spread across the day if postsPerDay > 1)
+                const scheduledHour = 9 + (i * Math.floor(8 / postsPerDay));
+                const scheduledTime = `${scheduledHour.toString().padStart(2, '0')}:00`;
+
+                await prisma.post.create({
+                    data: {
+                        brandId,
+                        imageId: imageToUse?.id || null,
+                        imagePrompt: imagePrompt || null,
+                        content: postContent,
+                        analysis: postAnalysis,
+                        date: new Date(currentDate),
+                        scheduledTime,
+                        status: 'SCHEDULED',
+                        type: 'LinkedIn Post'
+                    }
+                });
+                
+                generatedPostsCount++;
+            }
+            // Move to next day
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        res.json({ success: true, count: generatedPostsCount });
+
+    } catch (error) {
+        console.error('Error generating bulk posts:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;
+

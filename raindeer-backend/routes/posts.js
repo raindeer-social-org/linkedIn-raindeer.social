@@ -93,7 +93,7 @@ router.get('/brand/:brandId', async (req, res) => {
 // Update post (e.g. edit content, push/publish)
 router.put('/:id', async (req, res) => {
     try {
-        const { content, status, authorUrn } = req.body;
+        const { content, status, authorUrn, imagePrompt, customImageUrl } = req.body;
         
         // First get the existing post
         const existingPost = await prisma.post.findUnique({
@@ -109,6 +109,8 @@ router.put('/:id', async (req, res) => {
         if (content !== undefined) updateData.content = content;
         if (status !== undefined) updateData.status = status;
         if (authorUrn !== undefined) updateData.authorUrn = authorUrn;
+        if (imagePrompt !== undefined) updateData.imagePrompt = imagePrompt;
+        if (customImageUrl !== undefined) updateData.customImageUrl = customImageUrl;
 
         // If pushing to published, trigger LinkedIn API
         if (status === 'PUBLISHED' && existingPost.status !== 'PUBLISHED') {
@@ -127,7 +129,9 @@ router.put('/:id', async (req, res) => {
             let shareMediaCategory = 'NONE';
             let mediaElements = [];
 
-            if (existingPost.image && existingPost.image.url) {
+            const imageToPublish = existingPost.customImageUrl || (existingPost.image && existingPost.image.url);
+
+            if (imageToPublish) {
                 // 1. Register Upload
                 const registerBody = {
                     registerUploadRequest: {
@@ -158,9 +162,9 @@ router.put('/:id', async (req, res) => {
                 const assetUrn = regData.value.asset;
                 const uploadUrl = regData.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
 
-                // 2. Fetch the image from our ImageKit URL
-                const imgRes = await fetch(existingPost.image.url);
-                if (!imgRes.ok) throw new Error('Failed to fetch image from ImageKit');
+                // 2. Fetch the image from our ImageKit URL (or custom url)
+                const imgRes = await fetch(imageToPublish);
+                if (!imgRes.ok) throw new Error('Failed to fetch image for publishing');
                 const imgBuffer = await imgRes.arrayBuffer();
 
                 // 3. Upload binary image to LinkedIn

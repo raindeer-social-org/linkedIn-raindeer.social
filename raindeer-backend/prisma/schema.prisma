@@ -63,6 +63,8 @@ model Post {
   authorUrn       String?  // urn:li:person:ID or urn:li:organization:ID
   scheduledTime   String?      // "HH:MM" 24hr format e.g. "09:00"
   duration        Int?         @default(30)  // block duration in minutes
+  imagePrompt     String?  @db.Text
+  customImageUrl  String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
