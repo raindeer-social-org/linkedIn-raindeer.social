@@ -5,6 +5,76 @@ const Groq = require('groq-sdk');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_1 });
 
+function parsePostResponse(rawOutput) {
+    let cleanOutput = rawOutput.trim();
+    if (cleanOutput.startsWith('```json')) {
+        cleanOutput = cleanOutput.replace(/^```json/, '').replace(/```$/, '').trim();
+    } else if (cleanOutput.startsWith('```')) {
+        cleanOutput = cleanOutput.replace(/^```/, '').replace(/```$/, '').trim();
+    }
+
+    let postContent = '';
+    let imagePrompt = null;
+    let postAnalysis = null;
+
+    try {
+        let jsonStr = cleanOutput;
+        const firstBrace = cleanOutput.indexOf('{');
+        const lastBrace = cleanOutput.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            jsonStr = cleanOutput.substring(firstBrace, lastBrace + 1);
+        }
+        
+        const parsed = JSON.parse(jsonStr);
+        postContent = parsed.post_content;
+        imagePrompt = parsed.image_prompt || null;
+        postAnalysis = {
+            virality_score: parsed.virality_score,
+            authority_score: parsed.authority_score,
+            lead_generation_score: parsed.lead_generation_score,
+            target_persona: parsed.target_persona,
+            content_type: parsed.content_type,
+            strengths: parsed.strengths || [],
+            weaknesses: parsed.weaknesses || []
+        };
+    } catch (parseError) {
+        console.error('JSON.parse failed, attempting regex fallback:', parseError.message);
+        
+        // Match post_content
+        const contentMatch = cleanOutput.match(/"post_content"\s*:\s*"([\s\S]*?)"\s*(?:,|\s*})/);
+        if (contentMatch) {
+            postContent = contentMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+        } else {
+            postContent = cleanOutput;
+        }
+
+        // Match image_prompt
+        const promptMatch = cleanOutput.match(/"image_prompt"\s*:\s*"([\s\S]*?)"\s*(?:,|\s*})/);
+        if (promptMatch) {
+            imagePrompt = promptMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+        }
+
+        // Fallback analysis extraction for scores
+        const viralityMatch = cleanOutput.match(/"virality_score"\s*:\s*(\d+)/);
+        const authorityMatch = cleanOutput.match(/"authority_score"\s*:\s*(\d+)/);
+        const leadGenMatch = cleanOutput.match(/"lead_generation_score"\s*:\s*(\d+)/);
+        const personaMatch = cleanOutput.match(/"target_persona"\s*:\s*"([^"]+)"/);
+        const typeMatch = cleanOutput.match(/"content_type"\s*:\s*"([^"]+)"/);
+
+        postAnalysis = {
+            virality_score: viralityMatch ? parseInt(viralityMatch[1]) : null,
+            authority_score: authorityMatch ? parseInt(authorityMatch[1]) : null,
+            lead_generation_score: leadGenMatch ? parseInt(leadGenMatch[1]) : null,
+            target_persona: personaMatch ? personaMatch[1] : 'Unknown',
+            content_type: typeMatch ? typeMatch[1] : 'Post',
+            strengths: [],
+            weaknesses: []
+        };
+    }
+
+    return { postContent, imagePrompt, postAnalysis };
+}
+
 router.post('/', async (req, res) => {
     try {
         const { brandId, imageId, date, customPrompt } = req.body;
@@ -90,76 +160,16 @@ Requirements:
             max_tokens: 1500,
         });
 
-        let rawOutput = chatCompletion.choices[0]?.message?.content || '';
-        
-        // Sometimes LLMs wrap JSON in markdown blocks despite instructions
-        if (rawOutput.startsWith('\`\`\`json')) rawOutput = rawOutput.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
-        else if (rawOutput.startsWith('\`\`\`')) rawOutput = rawOutput.replace(/\`\`\`/g, '').trim();
-
-        let postContent = '';
-        let imagePrompt = null;
-        let postAnalysis = null;
-        try {
-            let jsonStr = rawOutput;
-            const firstBrace = rawOutput.indexOf('{');
-            const lastBrace = rawOutput.lastIndexOf('}');
-            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-                jsonStr = rawOutput.substring(firstBrace, lastBrace + 1);
-            }
-            
-            try {
-                const parsed = JSON.parse(jsonStr);
-                postContent = parsed.post_content;
-                imagePrompt = parsed.image_prompt;
-                postAnalysis = {
-                    virality_score: parsed.virality_score,
-                    authority_score: parsed.authority_score,
-                    lead_generation_score: parsed.lead_generation_score,
-                    target_persona: parsed.target_persona,
-                    content_type: parsed.content_type,
-                    strengths: parsed.strengths || [],
-                    weaknesses: parsed.weaknesses || []
-                };
-            } catch (parseError) {
-                console.error('JSON.parse failed, attempting regex fallback:', parseError.message);
-                const contentMatch = jsonStr.match(/"post_content"\s*:\s*"([\s\S]*?)"\s*,\s*"virality_score"/);
-                if (contentMatch) {
-                    postContent = contentMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
-                } else {
-                    postContent = rawOutput; // ultimate fallback
-                }
-                
-                // Fallback analysis extraction for scores if JSON parsing failed
-                const viralityMatch = jsonStr.match(/"virality_score"\s*:\s*(\d+)/);
-                const authorityMatch = jsonStr.match(/"authority_score"\s*:\s*(\d+)/);
-                const leadGenMatch = jsonStr.match(/"lead_generation_score"\s*:\s*(\d+)/);
-                const personaMatch = jsonStr.match(/"target_persona"\s*:\s*"([^"]+)"/);
-                const typeMatch = jsonStr.match(/"content_type"\s*:\s*"([^"]+)"/);
-                
-                if (viralityMatch) {
-                    postAnalysis = {
-                        virality_score: viralityMatch ? parseInt(viralityMatch[1]) : null,
-                        authority_score: authorityMatch ? parseInt(authorityMatch[1]) : null,
-                        lead_generation_score: leadGenMatch ? parseInt(leadGenMatch[1]) : null,
-                        target_persona: personaMatch ? personaMatch[1] : 'Unknown',
-                        content_type: typeMatch ? typeMatch[1] : 'Post',
-                        strengths: [],
-                        weaknesses: []
-                    };
-                }
-            }
-        } catch (e) {
-            console.error('Failed to process LLM output:', e);
-            postContent = rawOutput;
-        }
+        const rawOutput = chatCompletion.choices[0]?.message?.content || '';
+        const { postContent, imagePrompt, postAnalysis } = parsePostResponse(rawOutput);
 
         // Save as a draft post
         const post = await prisma.post.create({
             data: {
                 brandId,
                 imageId: imageToUse?.id || null,
-                imagePrompt: imagePrompt || null,
                 content: postContent,
+                imagePrompt: imagePrompt || null,
                 analysis: postAnalysis,
                 date: new Date(date || new Date()),
                 status: 'SCHEDULED',
@@ -313,7 +323,6 @@ router.post('/bulk', async (req, res) => {
                     imageIndex++;
                 }
 
-                // Call the existing logic essentially, but directly using Groq to avoid internal fetch
                 let imageContext = '';
                 let imageToUse = null;
 
@@ -378,64 +387,39 @@ Requirements:
 }
                 `.trim();
 
-                const chatCompletion = await groq.chat.completions.create({
-                    messages: [{ role: 'user', content: prompt }],
-                    model: 'llama-3.1-8b-instant',
-                    temperature: 0.8, // Slightly higher for more variety in bulk
-                    max_tokens: 1500,
-                });
-
-                let rawOutput = chatCompletion.choices[0]?.message?.content || '';
-                if (rawOutput.startsWith('```json')) rawOutput = rawOutput.replace(/```json/g, '').replace(/```/g, '').trim();
-                else if (rawOutput.startsWith('```')) rawOutput = rawOutput.replace(/```/g, '').trim();
-
-                let postContent = '';
-                let imagePrompt = null;
-                let postAnalysis = null;
-                
                 try {
-                    let jsonStr = rawOutput;
-                    const firstBrace = rawOutput.indexOf('{');
-                    const lastBrace = rawOutput.lastIndexOf('}');
-                    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-                        jsonStr = rawOutput.substring(firstBrace, lastBrace + 1);
-                    }
-                    const parsed = JSON.parse(jsonStr);
-                    postContent = parsed.post_content;
-                    imagePrompt = parsed.image_prompt;
-                    postAnalysis = {
-                        virality_score: parsed.virality_score,
-                        authority_score: parsed.authority_score,
-                        lead_generation_score: parsed.lead_generation_score,
-                        target_persona: parsed.target_persona,
-                        content_type: parsed.content_type,
-                        strengths: parsed.strengths || [],
-                        weaknesses: parsed.weaknesses || []
-                    };
-                } catch (e) {
-                    console.error('Failed to parse LLM output in bulk gen', e);
-                    postContent = rawOutput;
+                    const chatCompletion = await groq.chat.completions.create({
+                        messages: [{ role: 'user', content: prompt }],
+                        model: 'llama-3.1-8b-instant',
+                        temperature: 0.8, // Slightly higher for more variety in bulk
+                        max_tokens: 1500,
+                    });
+
+                    const rawOutput = chatCompletion.choices[0]?.message?.content || '';
+                    const { postContent, imagePrompt, postAnalysis } = parsePostResponse(rawOutput);
+
+                    // Assign a time (spread across the day if postsPerDay > 1)
+                    const scheduledHour = 9 + (i * Math.floor(8 / postsPerDay));
+                    const scheduledTime = `${scheduledHour.toString().padStart(2, '0')}:00`;
+
+                    await prisma.post.create({
+                        data: {
+                            brandId,
+                            imageId: imageToUse?.id || null,
+                            imagePrompt: imagePrompt || null,
+                            content: postContent,
+                            analysis: postAnalysis,
+                            date: new Date(currentDate),
+                            scheduledTime,
+                            status: 'SCHEDULED',
+                            type: 'LinkedIn Post'
+                        }
+                    });
+                    
+                    generatedPostsCount++;
+                } catch (err) {
+                    console.error(`Failed to generate post for date ${currentDate.toISOString()}:`, err);
                 }
-
-                // Assign a time (spread across the day if postsPerDay > 1)
-                const scheduledHour = 9 + (i * Math.floor(8 / postsPerDay));
-                const scheduledTime = `${scheduledHour.toString().padStart(2, '0')}:00`;
-
-                await prisma.post.create({
-                    data: {
-                        brandId,
-                        imageId: imageToUse?.id || null,
-                        imagePrompt: imagePrompt || null,
-                        content: postContent,
-                        analysis: postAnalysis,
-                        date: new Date(currentDate),
-                        scheduledTime,
-                        status: 'SCHEDULED',
-                        type: 'LinkedIn Post'
-                    }
-                });
-                
-                generatedPostsCount++;
             }
             // Move to next day
             currentDate.setDate(currentDate.getDate() + 1);
