@@ -2,18 +2,19 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 const variants = {
-  primary: 'bg-brand-blue text-white hover:bg-blue-600 glow-blue hover:shadow-glow border border-transparent',
-  secondary: 'bg-transparent text-brand-white border border-white/10 hover:border-brand-blue hover:text-brand-blue',
-  ghost: 'bg-transparent text-brand-muted hover:text-brand-white hover:bg-white/5 border border-transparent',
-  danger: 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20',
-  'blue-outline': 'bg-transparent text-brand-blue border border-brand-blue/40 hover:bg-brand-blue/10 hover:border-brand-blue',
+  primary: 'bg-cobalt-600 text-white hover:bg-cobalt-700 hover:shadow-cta border border-transparent shadow-xs',
+  secondary: 'bg-card text-ink border border-hairline-bold hover:bg-snow-2 hover:border-ink-4 shadow-xs',
+  ghost: 'bg-transparent text-ink-2 hover:bg-snow-2 hover:text-ink border border-transparent',
+  danger: 'bg-negative text-white hover:bg-negative/90 border border-transparent shadow-xs',
+  'blue-outline': 'bg-transparent text-cobalt-600 border border-cobalt-300 hover:bg-cobalt-50',
+  'on-midnight': 'bg-transparent text-midnight-ink border border-midnight-line hover:bg-midnight-card',
 }
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-xs rounded-lg',
-  md: 'px-5 py-2.5 text-sm rounded-xl',
-  lg: 'px-7 py-3.5 text-base rounded-xl font-medium',
-  xl: 'px-9 py-4 text-lg rounded-2xl font-semibold',
+  sm: 'px-3 py-1.5 text-xs rounded-controls h-[36px]',
+  md: 'px-5 py-2.5 text-sm rounded-controls h-[40px]',
+  lg: 'px-7 py-3.5 text-base rounded-controls font-medium h-[44px]',
+  xl: 'px-9 py-4 text-lg rounded-containers font-semibold h-[52px]',
 }
 
 export function Button({
@@ -33,15 +34,15 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      whileHover={disabled ? {} : { y: -2, scale: 1.01 }}
-      whileTap={disabled ? {} : { scale: 0.97 }}
-      transition={{ duration: 0.2 }}
+      whileHover={disabled ? {} : { y: -1 }}
+      whileTap={disabled ? {} : { y: 0 }}
+      transition={{ duration: 0.12, ease: 'easeOut' }}
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer select-none',
+        'inline-flex items-center justify-center gap-2 font-medium transition-all duration-dur-1 cursor-pointer select-none',
         variants[variant],
         sizes[size],
         fullWidth && 'w-full',
-        disabled && 'opacity-40 cursor-not-allowed pointer-events-none',
+        disabled && 'opacity-40 bg-snow-3 text-ink-4 border-hairline cursor-not-allowed pointer-events-none',
         className
       )}
       {...props}

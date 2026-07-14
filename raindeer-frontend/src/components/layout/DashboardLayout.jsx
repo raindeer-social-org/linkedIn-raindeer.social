@@ -24,27 +24,26 @@ export function DashboardLayout() {
   ]
 
   return (
-    <div className="min-h-screen bg-brand-bg flex">
+    <div className="min-h-screen bg-canvas text-ink flex">
       {/* Sidebar */}
       <motion.aside 
         initial={{ x: -250 }}
         animate={{ x: 0 }}
-        className="w-64 border-r border-white/5 flex flex-col glass"
-        style={{ background: 'rgba(7,17,31,0.92)' }}
+        className="w-64 border-r border-hairline flex flex-col bg-canvas"
       >
-        <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
+        <div className="h-16 flex items-center px-6 border-b border-hairline shrink-0">
           <div className="flex items-center gap-2.5">
             <RaindeerLogo size={24} />
-            <span className="font-display font-semibold text-brand-white text-sm tracking-wide">
-              raindeer<span className="text-brand-blue">.social</span>
+            <span className="font-sans font-bold text-ink text-sm tracking-wide">
+              raindeer<span className="text-cobalt-600">.social</span>
             </span>
           </div>
         </div>
 
         <div className="p-4 flex-1">
           <div className="mb-6 px-2">
-            <p className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2">Workspace</p>
-            <p className="text-brand-white font-medium text-sm truncate">{brandName || 'My Brand'}</p>
+            <p className="text-[10px] font-semibold text-ink-3 uppercase tracking-wider mb-1 font-mono">Workspace</p>
+            <p className="text-ink font-semibold text-sm truncate">{brandName || 'My Brand'}</p>
           </div>
 
           <nav className="space-y-1">
@@ -53,10 +52,10 @@ export function DashboardLayout() {
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) => cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 px-3 py-2 rounded-[10px] text-sm font-medium transition-all duration-200 border",
                   isActive 
-                    ? "bg-brand-blue/10 text-brand-blue-glow border border-brand-blue/20" 
-                    : "text-brand-muted hover:text-brand-white hover:bg-white/5 border border-transparent"
+                    ? "bg-cobalt-50 text-cobalt-700 border-cobalt-200/50 shadow-xs" 
+                    : "text-ink-2 hover:text-ink hover:bg-snow-2 border-transparent"
                 )}
               >
                 <link.icon size={18} />
@@ -66,10 +65,10 @@ export function DashboardLayout() {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-white/5 mt-auto">
+        <div className="p-4 border-t border-hairline mt-auto">
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-brand-muted hover:text-red-400 hover:bg-red-400/10 transition-all duration-200"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-[10px] text-sm font-medium text-ink-2 hover:text-negative hover:bg-negative-wash transition-all duration-200 border border-transparent"
           >
             <LogOut size={18} />
             Log Out
@@ -79,12 +78,12 @@ export function DashboardLayout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 border-b border-white/5 flex items-center justify-end px-6 shrink-0" style={{ background: 'rgba(7,17,31,0.5)', backdropFilter: 'blur(20px)' }}>
+        <header className="h-16 border-b border-hairline flex items-center justify-end px-6 shrink-0 bg-canvas/80 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand-white hover:bg-white/6 transition-all">
+            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-3 hover:text-ink hover:bg-snow-2 transition-all">
               <Bell size={16} />
             </button>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-blue-mid flex items-center justify-center text-xs font-semibold text-white overflow-hidden shadow-glow-sm">
+            <div className="w-8 h-8 rounded-full bg-cobalt-50 border border-cobalt-200 flex items-center justify-center text-xs font-semibold text-cobalt-700 overflow-hidden shadow-sm">
               {logoUrl ? (
                 <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
               ) : (
@@ -94,7 +93,7 @@ export function DashboardLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-8 bg-canvas">
           <Outlet />
         </div>
       </main>

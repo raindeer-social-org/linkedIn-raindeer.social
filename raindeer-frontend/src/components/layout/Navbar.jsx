@@ -32,14 +32,14 @@ export function Navbar() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="fixed top-0 left-0 right-0 z-40 h-16 flex items-center px-6 border-b border-white/5"
-      style={{ background: 'rgba(7,17,31,0.92)', backdropFilter: 'blur(20px)' }}
+      className="fixed top-0 left-0 right-0 z-40 h-16 flex items-center px-6 border-b border-hairline"
+      style={{ background: 'rgba(250,251,253,0.85)', backdropFilter: 'blur(12px)' }}
     >
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2.5 mr-auto">
         <RaindeerLogo size={28} />
-        <span className="font-display font-semibold text-brand-white text-sm tracking-wide hidden sm:block">
-          raindeer<span className="text-brand-blue">.social</span>
+        <span className="font-sans font-bold text-ink text-sm tracking-wide hidden sm:block">
+          raindeer<span className="text-cobalt-600">.social</span>
         </span>
       </Link>
 
@@ -54,16 +54,16 @@ export function Navbar() {
               <div key={step.path} className="flex items-center gap-1">
                 <Link to={isDone ? step.path : '#'}>
                   <div className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200',
-                    isCurrent ? 'bg-brand-blue text-white shadow-glow-sm' :
-                    isDone ? 'bg-brand-blue/30 text-brand-blue-glow' :
-                    'bg-white/6 text-brand-muted'
+                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold font-mono transition-all duration-200',
+                    isCurrent ? 'bg-cobalt-600 text-white shadow-sm' :
+                    isDone ? 'bg-cobalt-100 text-cobalt-700' :
+                    'bg-snow-3 text-ink-3'
                   )}>
                     {stepNum - 1}
                   </div>
                 </Link>
                 {idx < steps.length - 2 && (
-                  <div className={cn('w-4 h-px', isDone ? 'bg-brand-blue/40' : 'bg-white/8')} />
+                  <div className={cn('w-4 h-px', isDone ? 'bg-cobalt-300' : 'bg-hairline')} />
                 )}
               </div>
             )
@@ -76,16 +76,16 @@ export function Navbar() {
         {!isLanding && (
           <button 
             onClick={handleLogout}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-3 hover:text-red-600 hover:bg-red-50 transition-all"
             title="Log out"
           >
             <LogOut size={16} />
           </button>
         )}
-        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand-white hover:bg-white/6 transition-all">
+        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-3 hover:text-ink hover:bg-snow-2 transition-all">
           <Bell size={16} />
         </button>
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-blue-mid flex items-center justify-center text-xs font-semibold text-white">
+        <div className="w-8 h-8 rounded-full bg-cobalt-50 text-cobalt-700 border border-cobalt-200 flex items-center justify-center text-xs font-bold font-mono">
           R
         </div>
       </div>
@@ -101,13 +101,13 @@ export function RaindeerLogo({ size = 32, className }) {
       viewBox="0 0 80 80"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn('logo-glow', className)}
+      className={cn('node-marker', className)}
     >
       <defs>
         <linearGradient id="deerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#4477DD" />
-          <stop offset="50%" stopColor="#2255CC" />
-          <stop offset="100%" stopColor="#1133AA" />
+          <stop offset="0%" stopColor="#04338A" />
+          <stop offset="52%" stopColor="#0053CC" />
+          <stop offset="100%" stopColor="#2E7CF0" />
         </linearGradient>
       </defs>
 
@@ -135,14 +135,14 @@ export function RaindeerLogo({ size = 32, className }) {
       <line x1="54" y1="18" x2="58" y2="10" stroke="url(#deerGrad)" strokeWidth="1.5" strokeLinecap="round"/>
 
       {/* Antler nodes */}
-      <circle cx="18" cy="3" r="2.2" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
-      <circle cx="30" cy="8" r="2.2" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
-      <circle cx="14" cy="6" r="2.2" fill="#1133AA" stroke="#3366DD" strokeWidth="0.8"/>
-      <circle cx="22" cy="10" r="1.8" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
-      <circle cx="62" cy="3" r="2.2" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
-      <circle cx="50" cy="8" r="2.2" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
-      <circle cx="66" cy="6" r="2.2" fill="#1133AA" stroke="#3366DD" strokeWidth="0.8"/>
-      <circle cx="58" cy="10" r="1.8" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
+      <circle cx="18" cy="3" r="2.2" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="30" cy="8" r="2.2" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="14" cy="6" r="2.2" fill="#04338A" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="22" cy="10" r="1.8" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="62" cy="3" r="2.2" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="50" cy="8" r="2.2" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="66" cy="6" r="2.2" fill="#04338A" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="58" cy="10" r="1.8" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
 
       {/* === DEER FACE — geometric / triangular === */}
       {/* Outer face outline */}
@@ -158,24 +158,24 @@ export function RaindeerLogo({ size = 32, className }) {
       <path d="M48 30 L44 38 L40 30 Z" stroke="url(#deerGrad)" strokeWidth="1.2" fill="none" opacity="0.7"/>
 
       {/* Eyes */}
-      <ellipse cx="35" cy="39" rx="2" ry="1.5" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
-      <ellipse cx="45" cy="39" rx="2" ry="1.5" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
+      <ellipse cx="35" cy="39" rx="2" ry="1.5" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <ellipse cx="45" cy="39" rx="2" ry="1.5" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
 
       {/* Nose bridge lines */}
       <line x1="38" y1="44" x2="42" y2="44" stroke="url(#deerGrad)" strokeWidth="1.2" strokeLinecap="round"/>
       {/* Nose */}
-      <circle cx="40" cy="48" r="2" fill="#1E6BFF" stroke="#35A7FF" strokeWidth="0.8"/>
+      <circle cx="40" cy="48" r="2" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
 
       {/* Chin triangle */}
       <path d="M34 50 L40 56 L46 50" stroke="url(#deerGrad)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
 
       {/* Junction nodes */}
-      <circle cx="32" cy="30" r="2" fill="#1E6BFF" stroke="#35A7FF" strokeWidth="0.8"/>
-      <circle cx="48" cy="30" r="2" fill="#1E6BFF" stroke="#35A7FF" strokeWidth="0.8"/>
-      <circle cx="40" cy="30" r="1.5" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
-      <circle cx="25" cy="48" r="1.5" fill="#1E6BFF" stroke="#35A7FF" strokeWidth="0.8"/>
-      <circle cx="55" cy="48" r="1.5" fill="#1E6BFF" stroke="#35A7FF" strokeWidth="0.8"/>
-      <circle cx="40" cy="56" r="1.5" fill="#2255CC" stroke="#4488FF" strokeWidth="0.8"/>
+      <circle cx="32" cy="30" r="2" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="48" cy="30" r="2" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="40" cy="30" r="1.5" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="25" cy="48" r="1.5" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="55" cy="48" r="1.5" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
+      <circle cx="40" cy="56" r="1.5" fill="#0053CC" stroke="#2E7CF0" strokeWidth="0.8"/>
     </svg>
   )
 }

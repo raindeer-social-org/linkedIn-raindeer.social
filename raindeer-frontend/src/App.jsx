@@ -26,13 +26,15 @@ export default function App() {
         position="top-right"
         toastOptions={{
           style: {
-            background: '#0B1320',
-            color: '#F5F7FA',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '12px',
-            fontSize: '13px',
+            background: 'var(--snow-card)',
+            color: 'var(--ink)',
+            border: '1px solid var(--hairline)',
+            borderRadius: '10px',
+            fontSize: '14px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
           },
-          success: { iconTheme: { primary: '#1E6BFF', secondary: '#F5F7FA' } },
+          success: { iconTheme: { primary: 'var(--positive)', secondary: 'var(--snow-card)' } },
+          error: { iconTheme: { primary: 'var(--negative)', secondary: 'var(--snow-card)' } },
         }}
       />
       <AnimatePresence mode="wait">

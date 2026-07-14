@@ -1,21 +1,32 @@
 import { cn } from '@/lib/utils'
 
 const variantStyles = {
-  blue:   'bg-brand-blue/20 text-brand-blue border border-brand-blue/30',
-  green:  'bg-green-500/15 text-green-400 border border-green-500/30',
-  amber:  'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-  red:    'bg-red-500/15 text-red-400 border border-red-500/30',
-  gray:   'bg-white/6 text-brand-muted border border-white/10',
-  purple: 'bg-purple-500/15 text-purple-400 border border-purple-500/30',
-  teal:   'bg-teal-500/15 text-teal-400 border border-teal-500/30',
+  // New names
+  draft: 'bg-snow-3 text-ink-2 border border-hairline',
+  scheduled: 'bg-cobalt-50 text-cobalt-700 border border-cobalt-200/50',
+  published: 'bg-positive-wash text-positive border border-positive/10',
+  failed: 'bg-negative-wash text-negative border border-negative/10',
+  caution: 'bg-caution-wash text-caution border border-caution/10',
+  review: 'bg-caution-wash text-caution border border-caution/10',
+  tag: 'bg-snow-2 text-ink-2 border border-hairline',
+  pro: 'bg-card text-brass-700 border border-brass-300',
+
+  // Old mappings compatibility
+  blue: 'bg-cobalt-50 text-cobalt-700 border border-cobalt-200/50',
+  green: 'bg-positive-wash text-positive border border-positive/10',
+  amber: 'bg-caution-wash text-caution border border-caution/10',
+  red: 'bg-negative-wash text-negative border border-negative/10',
+  gray: 'bg-snow-3 text-ink-2 border border-hairline',
+  purple: 'bg-cobalt-50 text-cobalt-700 border border-cobalt-200/50',
+  teal: 'bg-cobalt-50 text-glacier-700 border border-glacier-300/50',
 }
 
 export function Badge({ children, variant = 'blue', className, dot, ...props }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium',
-        variantStyles[variant],
+        'inline-flex items-center gap-1.5 px-2.5 h-[24px] rounded-identity text-micro font-mono uppercase tracking-widest',
+        variantStyles[variant] || variantStyles.draft,
         className
       )}
       {...props}
@@ -23,12 +34,10 @@ export function Badge({ children, variant = 'blue', className, dot, ...props }) 
       {dot && (
         <span className={cn(
           'w-1.5 h-1.5 rounded-full flex-shrink-0',
-          variant === 'blue' ? 'bg-brand-blue' :
-          variant === 'green' ? 'bg-green-400' :
-          variant === 'amber' ? 'bg-amber-400' :
-          variant === 'red' ? 'bg-red-400' :
-          variant === 'teal' ? 'bg-teal-400' :
-          'bg-brand-muted'
+          variant === 'published' || variant === 'green' ? 'bg-positive' :
+          variant === 'failed' || variant === 'red' ? 'bg-negative' :
+          variant === 'caution' || variant === 'review' || variant === 'amber' ? 'bg-caution' :
+          'bg-cobalt-600'
         )} />
       )}
       {children}

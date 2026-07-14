@@ -276,8 +276,8 @@ JSON Array Format:
         });
 
         let rawOutput = chatCompletion.choices[0]?.message?.content || '';
-        if (rawOutput.startsWith('\`\`\`json')) rawOutput = rawOutput.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
-        else if (rawOutput.startsWith('\`\`\`')) rawOutput = rawOutput.replace(/\`\`\`/g, '').trim();
+        if (rawOutput.startsWith('```json')) rawOutput = rawOutput.replace(/```json/g, '').replace(/```/g, '').trim();
+        else if (rawOutput.startsWith('```')) rawOutput = rawOutput.replace(/```/g, '').trim();
 
         const slides = JSON.parse(rawOutput);
         res.json({ success: true, slides });

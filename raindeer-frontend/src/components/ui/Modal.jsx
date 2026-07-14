@@ -19,7 +19,7 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
           <Dialog.Portal forceMount>
             <Dialog.Overlay asChild>
               <motion.div
-                className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
+                className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -32,20 +32,20 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
                   'fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full px-4',
                   sizes[size]
                 )}
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                initial={{ opacity: 0, scale: 0.98, y: 8 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+                exit={{ opacity: 0, scale: 0.98, y: 8 }}
+                transition={{ duration: 0.24, ease: 'easeOut' }} // dur-2
               >
-                <div className={cn('glass-elevated rounded-2xl p-6 max-h-[90vh] overflow-y-auto', className)}>
+                <div className={cn('bg-card border border-hairline rounded-stage shadow-lg p-6 max-h-[90vh] overflow-y-auto', className)}>
                   {title && (
                     <div className="flex items-center justify-between mb-5">
-                      <Dialog.Title className="text-lg font-semibold text-brand-white">
+                      <Dialog.Title className="text-title font-medium font-serif text-ink">
                         {title}
                       </Dialog.Title>
                       <button
                         onClick={onClose}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand-white hover:bg-white/8 transition-all"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-3 hover:text-ink hover:bg-snow-2 transition-all"
                       >
                         <X size={16} />
                       </button>

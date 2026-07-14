@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -12,6 +12,7 @@ import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { AnimatedPage } from '@/components/layout/AnimatedPage'
 import RescheduleDialog from '@/components/RescheduleDialog'
+import { Button } from '@/components/ui'
 
 export default function ContentCalendar() {
   const calendarRef = useRef(null)
@@ -53,7 +54,7 @@ export default function ContentCalendar() {
     revertFn: null
   })
 
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     if (!brandId) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload/brand/${brandId}`)
@@ -64,9 +65,9 @@ export default function ContentCalendar() {
     } catch (err) {
       console.error(err)
     }
-  }
+  }, [brandId])
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     if (!brandId) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`, {
@@ -85,12 +86,12 @@ export default function ContentCalendar() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [brandId, token])
 
   useEffect(() => {
     fetchPosts()
     fetchImages()
-  }, [brandId])
+  }, [brandId, fetchPosts, fetchImages])
 
   const events = posts.map(post => {
     const dateStr = post.date.split('T')[0]
@@ -105,17 +106,29 @@ export default function ContentCalendar() {
       end = startDate.toISOString()
     }
 
+    const isPublished = post.status === 'PUBLISHED'
+    const isScheduled = post.status === 'SCHEDULED' || post.status === 'PENDING'
+
     return {
       id: post.id,
       title: post.type || 'LinkedIn Post',
       start,
       end,
-      backgroundColor: post.status === 'PUBLISHED' 
-        ? '#22c55e' 
-        : post.status === 'PENDING' 
-          ? '#f59e0b' 
-          : '#3b82f6',
-      borderColor: 'transparent',
+      backgroundColor: isPublished 
+        ? 'var(--positive-wash)' 
+        : isScheduled 
+          ? 'var(--cobalt-50)' 
+          : 'var(--snow-3)',
+      borderColor: isPublished 
+        ? 'var(--positive)' 
+        : isScheduled 
+          ? 'var(--cobalt-200)' 
+          : 'var(--hairline-bold)',
+      textColor: isPublished 
+        ? 'var(--positive)' 
+        : isScheduled 
+          ? 'var(--cobalt-700)' 
+          : 'var(--ink-2)',
       extendedProps: {
         content: post.content,
         status: post.status,
@@ -307,12 +320,12 @@ export default function ContentCalendar() {
 
   const renderEventContent = (eventInfo) => {
     return (
-      <div className="px-1 py-0.5 overflow-hidden">
-        <div className="text-xs font-medium text-white truncate">
+      <div className="px-1 py-0.5 overflow-hidden w-full">
+        <div className="text-[10px] font-semibold font-sans truncate" style={{ color: eventInfo.textColor }}>
           {eventInfo.event.title}
         </div>
         {eventInfo.event.extendedProps.scheduledTime && (
-          <div className="text-xs text-white/70">
+          <div className="text-[9px] opacity-80 font-mono mt-0.5" style={{ color: eventInfo.textColor }}>
             {eventInfo.event.extendedProps.scheduledTime}
           </div>
         )}
@@ -325,55 +338,63 @@ export default function ContentCalendar() {
       <div className="max-w-7xl mx-auto px-4 py-8 relative">
         <style>{`
           .fc {
-            --fc-border-color: #334155;
-            --fc-page-bg-color: #0f172a;
-            --fc-neutral-bg-color: #1e293b;
-            --fc-list-event-hover-bg-color: #334155;
-            --fc-today-bg-color: rgba(59, 130, 246, 0.15);
+            --fc-border-color: var(--hairline);
+            --fc-page-bg-color: var(--snow-canvas);
+            --fc-neutral-bg-color: var(--snow-2);
+            --fc-list-event-hover-bg-color: var(--snow-2);
+            --fc-today-bg-color: transparent;
             --fc-event-border-color: transparent;
-            --fc-now-indicator-color: #ef4444;
           }
           .fc-theme-standard td, 
           .fc-theme-standard th,
           .fc-theme-standard .fc-scrollgrid {
-            border-color: #334155;
+            border-color: var(--hairline) !important;
           }
           .fc-col-header-cell-cushion,
           .fc-daygrid-day-number,
           .fc-list-day-text,
           .fc-list-day-side-text {
-            color: #94a3b8;
+            color: var(--ink-3);
             text-decoration: none;
+            font-family: var(--font-mono);
+            font-size: var(--text-micro);
           }
           .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-            background: #3b82f6;
-            color: white;
+            color: var(--cobalt-600);
+            font-weight: 600;
+            position: relative;
+            background: transparent !important;
+          }
+          .fc-daygrid-day.fc-day-today .fc-daygrid-day-number::before {
+            content: '';
+            position: absolute;
+            left: -2px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: var(--cobalt-600);
           }
           .fc-button {
             display: none;  /* hide all FullCalendar default buttons */
           }
           .fc-list-empty {
-            background: #1e293b;
-            color: #94a3b8;
+            background: var(--snow-canvas);
+            color: var(--ink-3);
           }
         `}</style>
 
         <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-brand-white" style={{ letterSpacing: '-0.02em' }}>Content Calendar</h1>
-          <p className="text-brand-muted text-sm mt-1">{posts.length} posts scheduled</p>
+          <h1 className="font-serif text-3xl font-medium text-ink">Content Calendar</h1>
+          <p className="text-xs text-ink-3 font-semibold uppercase tracking-wider font-mono mt-1">{posts.length} posts scheduled</p>
         </div>
         
         {isGenerating && (
-          <div className="absolute inset-0 z-10 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl">
-            <Loader2 className="w-12 h-12 text-brand-blue animate-spin mb-4" />
-            <h3 className="text-white font-semibold">Generating Post...</h3>
-            <p className="text-brand-muted text-sm mt-1">Analyzing image and brand context</p>
+          <div className="absolute inset-0 z-50 bg-ink/40 backdrop-blur-sm flex flex-col items-center justify-center rounded-stage">
+            <Loader2 className="w-12 h-12 text-cobalt-600 animate-spin mb-4" />
+            <h3 className="text-ink font-serif text-title font-medium">AI is generating your post...</h3>
+            <p className="text-ink-3 text-sm mt-1">Analyzing context and templates</p>
           </div>
         )}
 
@@ -381,13 +402,13 @@ export default function ContentCalendar() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           {/* Calendar Navigation */}
           <div className="flex items-center gap-4">
-            <div className="flex gap-1 bg-slate-800 p-1 rounded-lg">
+            <div className="flex gap-1 bg-snow-3 p-1 rounded-controls border border-hairline">
               <button 
                 onClick={() => {
                   calendarRef.current.getApi().prev();
                   setTitle(calendarRef.current.getApi().view.title);
                 }}
-                className="px-2.5 py-1 bg-slate-700 text-slate-300 hover:bg-slate-600 rounded-md text-sm font-medium"
+                className="px-2.5 py-1 bg-card hover:bg-snow-2 border border-hairline-bold text-ink rounded-[6px] text-xs font-semibold"
               >
                 &lt;
               </button>
@@ -396,7 +417,7 @@ export default function ContentCalendar() {
                   calendarRef.current.getApi().today();
                   setTitle(calendarRef.current.getApi().view.title);
                 }}
-                className="px-3 py-1 bg-slate-700 text-slate-300 hover:bg-slate-600 rounded-md text-sm font-medium"
+                className="px-3 py-1 bg-card hover:bg-snow-2 border border-hairline-bold text-ink rounded-[6px] text-xs font-semibold"
               >
                 Today
               </button>
@@ -405,17 +426,17 @@ export default function ContentCalendar() {
                   calendarRef.current.getApi().next();
                   setTitle(calendarRef.current.getApi().view.title);
                 }}
-                className="px-2.5 py-1 bg-slate-700 text-slate-300 hover:bg-slate-600 rounded-md text-sm font-medium"
+                className="px-2.5 py-1 bg-card hover:bg-snow-2 border border-hairline-bold text-ink rounded-[6px] text-xs font-semibold"
               >
                 &gt;
               </button>
             </div>
-            <span className="text-white font-semibold text-lg">{title}</span>
+            <span className="text-ink font-serif font-medium text-lg">{title}</span>
           </div>
 
           <div className="flex items-center gap-4">
             {/* View Switcher */}
-            <div className="flex gap-1 bg-slate-800 p-1 rounded-lg">
+            <div className="flex gap-1 bg-snow-3 p-1 rounded-controls border border-hairline">
               {[
                 { id: 'dayGridMonth', label: 'Month' },
                 { id: 'timeGridWeek', label: 'Week' },
@@ -428,10 +449,10 @@ export default function ContentCalendar() {
                     calendarRef.current.getApi().changeView(view.id)
                     setCurrentView(view.id)
                   }}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-3 py-1 rounded-[6px] text-xs font-semibold transition-colors border ${
                     currentView === view.id
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      ? 'bg-cobalt-50 border-cobalt-200 text-cobalt-700 shadow-xs'
+                      : 'bg-card border-hairline-bold text-ink-2 hover:bg-snow-2 hover:text-ink'
                   }`}
                 >
                   {view.label}
@@ -440,20 +461,19 @@ export default function ContentCalendar() {
             </div>
 
             {/* Auto-Generate */}
-            <button 
+            <Button 
               onClick={handleGenerateCalendar} 
               disabled={isAutoGenerating} 
-              className="flex items-center px-4 py-2 bg-brand-blue/10 text-brand-blue border border-brand-blue/20 hover:bg-brand-blue/20 rounded-lg text-sm font-medium transition-colors"
+              icon={isAutoGenerating ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
             >
-              {isAutoGenerating ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
               {isAutoGenerating ? 'Generating AI Posts...' : 'Auto-Generate Calendar'}
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Calendar Box */}
-        <div className="glass rounded-3xl p-4" style={{ minHeight: 600 }}>
-          <p className="text-brand-muted text-sm mb-4 px-2">Drag and drop posts to reschedule, or click an empty date/time slot to generate a post.</p>
+        <div className="bg-card border border-hairline rounded-stage p-6 shadow-sm" style={{ minHeight: 600 }}>
+          <p className="text-ink-3 text-xs font-medium mb-4 px-2">Drag and drop posts to reschedule, or click an empty date/time slot to generate a post.</p>
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
@@ -476,20 +496,20 @@ export default function ContentCalendar() {
         {/* Photo Selection Modal */}
         <AnimatePresence>
           {isPhotoModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-brand-bg rounded-2xl border border-white/10 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
+                className="bg-card border border-hairline rounded-stage w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-lg"
               >
-                <div className="p-5 border-b border-white/10 flex justify-between items-center">
+                <div className="p-5 border-b border-hairline flex justify-between items-center bg-snow-2">
                   <div>
-                    <h3 className="font-semibold text-white">Select a Photo for {selectedDate}</h3>
-                    <p className="text-xs text-brand-muted">The AI will use this photo and its description to craft the post.</p>
+                    <h3 className="font-serif font-medium text-ink text-title">Select a Photo for {selectedDate}</h3>
+                    <p className="text-xs text-ink-3 mt-1">The AI will use this photo and its description to craft the post.</p>
                   </div>
-                  <button onClick={() => setIsPhotoModalOpen(false)} className="text-brand-muted hover:text-white p-2">✕</button>
+                  <button onClick={() => setIsPhotoModalOpen(false)} className="text-ink-3 hover:text-ink p-2">✕</button>
                 </div>
                 
-                <div className="p-5 overflow-y-auto">
+                <div className="p-5 overflow-y-auto bg-canvas">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {availableImages?.map(img => {
                       const isSelected = selectedImages.some(i => i.id === img.id);
@@ -503,14 +523,14 @@ export default function ContentCalendar() {
                             setSelectedImages([...selectedImages, img])
                           }
                         }}
-                        className={`group text-left relative rounded-xl overflow-hidden border ${isSelected ? 'border-brand-blue ring-2 ring-brand-blue' : 'border-white/10 hover:border-brand-blue'} bg-black/50 aspect-square transition-all focus:outline-none`}
+                        className={`group text-left relative rounded-containers overflow-hidden border ${isSelected ? 'border-cobalt-600 ring-2 ring-cobalt-200' : 'border-hairline hover:border-hairline-bold'} bg-card aspect-square transition-all focus:outline-none`}
                       >
                         <img src={img.url} alt={img.description} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3 flex flex-col justify-end">
+                        <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent p-3 flex flex-col justify-end">
                           <p className="text-xs text-white line-clamp-2">{img.description}</p>
                         </div>
                         {isSelected && (
-                          <div className="absolute top-2 right-2 bg-brand-blue text-white rounded-full p-1 shadow-lg">
+                          <div className="absolute top-2 right-2 bg-cobalt-600 text-white rounded-full p-1 shadow-md">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                           </div>
                         )}
@@ -519,15 +539,14 @@ export default function ContentCalendar() {
                   </div>
                 </div>
                 
-                <div className="p-4 border-t border-white/10 flex justify-end gap-3 bg-black/20">
-                  <button onClick={() => setIsPhotoModalOpen(false)} className="px-4 py-2 text-sm text-brand-muted hover:text-white transition-colors">Cancel</button>
-                  <button 
+                <div className="p-4 border-t border-hairline flex justify-end gap-3 bg-snow-2">
+                  <Button variant="ghost" onClick={() => setIsPhotoModalOpen(false)}>Cancel</Button>
+                  <Button 
                     onClick={handleGenerateFromPhotos}
                     disabled={selectedImages.length === 0}
-                    className="px-4 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Generate Post with {selectedImages.length} {selectedImages.length === 1 ? 'Photo' : 'Photos'}
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             </div>
@@ -537,26 +556,26 @@ export default function ContentCalendar() {
         {/* Single Date Modal */}
         <AnimatePresence>
           {isSingleDateModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-brand-bg rounded-2xl border border-white/10 w-full max-w-md overflow-hidden flex flex-col shadow-2xl"
+                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
+                className="bg-card border border-hairline rounded-stage w-full max-w-md overflow-hidden flex flex-col shadow-lg"
               >
-                <div className="p-5 border-b border-white/10 flex justify-between items-center">
+                <div className="p-5 border-b border-hairline flex justify-between items-center bg-snow-2">
                   <div>
-                    <h3 className="font-semibold text-white">Generate Post</h3>
-                    <p className="text-xs text-brand-muted">For {selectedDate}</p>
+                    <h3 className="font-serif font-medium text-ink text-title">Generate Post</h3>
+                    <p className="text-xs text-ink-3 mt-1">For {selectedDate}</p>
                   </div>
-                  <button onClick={() => setIsSingleDateModalOpen(false)} className="text-brand-muted hover:text-white p-2">✕</button>
+                  <button onClick={() => setIsSingleDateModalOpen(false)} className="text-ink-3 hover:text-ink p-2">✕</button>
                 </div>
                 
                 <div className="p-5 flex flex-col gap-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-brand-muted">Content Strategy</label>
+                    <label className="text-[10px] font-semibold text-ink-2 uppercase tracking-wider font-mono">Content Strategy</label>
                     <select 
                       value={singleDateStrategy}
                       onChange={(e) => setSingleDateStrategy(e.target.value)}
-                      className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                      className="bg-card border border-hairline-bold rounded-controls p-2 text-sm text-ink focus:outline-none focus:border-cobalt-500"
                     >
                       <option value="prompt_only">Text + AI Image Prompt (Recommended)</option>
                       <option value="text_only">Text Only</option>
@@ -565,24 +584,24 @@ export default function ContentCalendar() {
                   </div>
                   
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-brand-muted">Custom Instructions (Optional)</label>
+                    <label className="text-[10px] font-semibold text-ink-2 uppercase tracking-wider font-mono">Custom Instructions (Optional)</label>
                     <textarea 
                       value={singleDateCustomPrompt}
                       onChange={(e) => setSingleDateCustomPrompt(e.target.value)}
                       placeholder="e.g. Write about our new product launch..."
-                      className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue min-h-[80px] resize-none"
+                      className="bg-card border border-hairline-bold rounded-controls p-2 text-sm text-ink focus:outline-none focus:border-cobalt-500 min-h-[80px] resize-none"
                     />
                   </div>
                 </div>
                 
-                <div className="p-4 border-t border-white/10 flex justify-end gap-3 bg-black/20">
-                  <button onClick={() => setIsSingleDateModalOpen(false)} className="px-4 py-2 text-sm text-brand-muted hover:text-white transition-colors">Cancel</button>
-                  <button 
+                <div className="p-4 border-t border-hairline flex justify-end gap-3 bg-snow-2">
+                  <Button variant="ghost" onClick={() => setIsSingleDateModalOpen(false)}>Cancel</Button>
+                  <Button 
                     onClick={handleSingleDateGenerate}
-                    className="px-4 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                    icon={<Sparkles size={16} />}
                   >
-                    <Sparkles size={16} /> Generate Now
-                  </button>
+                    Generate Now
+                  </Button>
                 </div>
               </motion.div>
             </div>
@@ -592,47 +611,47 @@ export default function ContentCalendar() {
         {/* Auto Generate Modal */}
         <AnimatePresence>
           {isAutoGenerateModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-brand-bg rounded-2xl border border-white/10 w-full max-w-md overflow-hidden flex flex-col shadow-2xl"
+                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
+                className="bg-card border border-hairline rounded-stage w-full max-w-md overflow-hidden flex flex-col shadow-lg"
               >
-                <div className="p-5 border-b border-white/10 flex justify-between items-center">
+                <div className="p-5 border-b border-hairline flex justify-between items-center bg-snow-2">
                   <div>
-                    <h3 className="font-semibold text-white">Auto-Generate Calendar</h3>
-                    <p className="text-xs text-brand-muted">Fill your calendar with AI generated content</p>
+                    <h3 className="font-serif font-medium text-ink text-title">Auto-Generate Calendar</h3>
+                    <p className="text-xs text-ink-3 mt-1">Fill your calendar with AI generated content</p>
                   </div>
-                  <button onClick={() => setIsAutoGenerateModalOpen(false)} className="text-brand-muted hover:text-white p-2">✕</button>
+                  <button onClick={() => setIsAutoGenerateModalOpen(false)} className="text-ink-3 hover:text-ink p-2">✕</button>
                 </div>
                 
                 <div className="p-5 flex flex-col gap-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs font-medium text-brand-muted">Start Date</label>
+                      <label className="text-[10px] font-semibold text-ink-2 uppercase tracking-wider font-mono">Start Date</label>
                       <input 
                         type="date" 
                         value={bulkSettings.startDate}
                         onChange={(e) => setBulkSettings({ ...bulkSettings, startDate: e.target.value })}
-                        className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                        className="bg-card border border-hairline-bold rounded-controls p-2 text-sm text-ink focus:outline-none focus:border-cobalt-500"
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs font-medium text-brand-muted">End Date</label>
+                      <label className="text-[10px] font-semibold text-ink-2 uppercase tracking-wider font-mono">End Date</label>
                       <input 
                         type="date" 
                         value={bulkSettings.endDate}
                         onChange={(e) => setBulkSettings({ ...bulkSettings, endDate: e.target.value })}
-                        className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                        className="bg-card border border-hairline-bold rounded-controls p-2 text-sm text-ink focus:outline-none focus:border-cobalt-500"
                       />
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-brand-muted">Posts per day</label>
+                    <label className="text-[10px] font-semibold text-ink-2 uppercase tracking-wider font-mono">Posts per day</label>
                     <select 
                       value={bulkSettings.postsPerDay}
                       onChange={(e) => setBulkSettings({ ...bulkSettings, postsPerDay: parseInt(e.target.value) })}
-                      className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                      className="bg-card border border-hairline-bold rounded-controls p-2 text-sm text-ink focus:outline-none focus:border-cobalt-500"
                     >
                       <option value={1}>1 Post</option>
                       <option value={2}>2 Posts</option>
@@ -641,11 +660,11 @@ export default function ContentCalendar() {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-brand-muted">Content Strategy</label>
+                    <label className="text-[10px] font-semibold text-ink-2 uppercase tracking-wider font-mono">Content Strategy</label>
                     <select 
                       value={bulkSettings.generationMode}
                       onChange={(e) => setBulkSettings({ ...bulkSettings, generationMode: e.target.value })}
-                      className="bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-brand-blue"
+                      className="bg-card border border-hairline-bold rounded-controls p-2 text-sm text-ink focus:outline-none focus:border-cobalt-500"
                     >
                       <option value="prompt_only">Text + AI Image Prompt (Recommended)</option>
                       <option value="text_only">Text Only</option>
@@ -654,14 +673,14 @@ export default function ContentCalendar() {
                   </div>
                 </div>
                 
-                <div className="p-4 border-t border-white/10 flex justify-end gap-3 bg-black/20">
-                  <button onClick={() => setIsAutoGenerateModalOpen(false)} className="px-4 py-2 text-sm text-brand-muted hover:text-white transition-colors">Cancel</button>
-                  <button 
+                <div className="p-4 border-t border-hairline flex justify-end gap-3 bg-snow-2">
+                  <Button variant="ghost" onClick={() => setIsAutoGenerateModalOpen(false)}>Cancel</Button>
+                  <Button 
                     onClick={handleBulkGenerate}
-                    className="px-4 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                    icon={<Sparkles size={16} />}
                   >
-                    <Sparkles size={16} /> Generate Now
-                  </button>
+                    Generate Now
+                  </Button>
                 </div>
               </motion.div>
             </div>

@@ -3,23 +3,31 @@ import { cn } from '@/lib/utils'
 
 export function Card({ children, className, variant = 'default', onClick, hover = true, ...props }) {
   const variants = {
-    default: 'glass rounded-2xl',
-    elevated: 'glass-elevated rounded-2xl',
-    highlighted: 'glass-blue rounded-2xl',
-    surface: 'bg-brand-surface border border-white/8 rounded-2xl',
+    default: 'bg-card border border-hairline rounded-containers shadow-sm',
+    elevated: 'bg-card border border-hairline-bold rounded-containers shadow-md',
+    highlighted: 'bg-cobalt-50 border border-cobalt-200 rounded-containers shadow-xs',
+    surface: 'bg-snow-2 border border-hairline rounded-containers',
   }
 
-  const Component = onClick || hover ? motion.div : 'div'
-  const motionProps = (onClick || hover) ? {
-    whileHover: { y: -2, scale: 1.005 },
-    transition: { duration: 0.2 },
+  const isInteractive = onClick || hover
+  const Component = isInteractive ? motion.div : 'div'
+  
+  const motionProps = isInteractive ? {
+    whileHover: { y: -2 },
+    transition: { duration: 0.2, ease: 'easeOut' }, // dur-2
   } : {}
 
   return (
     <Component
       onClick={onClick}
-      className={cn(variants[variant], 'p-6', onClick && 'cursor-pointer', className)}
-      {...(onClick || hover ? motionProps : {})}
+      className={cn(
+        variants[variant],
+        'p-6',
+        onClick && 'cursor-pointer',
+        isInteractive && 'hover:border-hairline-bold hover:shadow-md transition-all duration-dur-2',
+        className
+      )}
+      {...motionProps}
       {...props}
     >
       {children}
